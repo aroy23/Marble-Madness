@@ -7,6 +7,8 @@
 
 // Students:  Add code to this file, StudentWorld.cpp, Actor.h, and Actor.cpp
 
+class Actor;
+
 class StudentWorld : public GameWorld
 {
 public:
@@ -16,6 +18,7 @@ public:
   virtual void cleanUp();
 
 private:
+    std::vector<Actor*> m_actors;
 };
 
 #endif // STUDENTWORLD_H_
