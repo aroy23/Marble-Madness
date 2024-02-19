@@ -9,34 +9,34 @@ GameWorld* createStudentWorld(string assetPath)
 	return new StudentWorld(assetPath);
 }
 
-// Students:  Add code to this file, StudentWorld.h, Actor.h, and Actor.cpp
 
+// StudentWorld Constructor and Destructor
 StudentWorld::StudentWorld(string assetPath)
 : GameWorld(assetPath)
 {
-    m_player = nullptr;
+    m_player = nullptr; // player starts off as a nullptr before it is created in init function
     playerDeleted = false;
 }
 
 StudentWorld::~StudentWorld()
 {
-    // Destructor and cleanup do the same thing so the destructor just calls cleanup
-    cleanUp();
+    cleanUp();  // Destructor and cleanup do the same thing so the destructor just calls cleanup
 }
 
+
+// StudentWorld Functions
 int StudentWorld::init()
 {
-    // Using to_string with getLevel to load the level file
-    string currLevel = "level0" + to_string(getLevel()) + ".txt";
+    
+    string currLevel = "level0" + to_string(getLevel()) + ".txt"; // loading file based on current level
     Level lev(assetPath());
     Level::LoadResult result = lev.loadLevel(currLevel);
     if(result == Level::load_fail_file_not_found || result == Level:: load_fail_bad_format)
     {
-        return -1;
+        return -1; // return -1 if level load failed
     }
     
-    // Creating actors based on the level file
-    for(int x = 0; x < VIEW_WIDTH; x++)
+    for(int x = 0; x < VIEW_WIDTH; x++) // Creating actors based on the level by looping through the file
     {
         for(int y = 0; y < VIEW_HEIGHT; y++)
         {
@@ -57,38 +57,15 @@ int StudentWorld::init()
     return GWSTATUS_CONTINUE_GAME;
 }
 
-/*
- 
- 012345678911234
-4###############
-3#      @      #
-2#    b   b    #
-1# #         ###
-1# #    b    # #
-9# #    b    # #
-8# #    b    # #
-7# #    b    # #
-6#a#    b    # #
-5###h   b    # #
-4#             #
-3#           b #
-2######   ######
-1#      x    o*#
-0###############
- 
-*/
-
 int StudentWorld::move()
 {
     setGameStatText("Game will end when you type q");
-    // Asking Player to doSomething
-    m_player->doSomething();
+    m_player->doSomething(); // Asking Player to doSomething
     
-    // Asking Actors to doSomething
     vector<Actor*>::iterator p;
     for(p = m_actors.begin(); p != m_actors.end(); p++)
     {
-        (*p)->doSomething();
+        (*p)->doSomething(); // Asking Actors to doSomething
     }
     
 	return GWSTATUS_CONTINUE_GAME;
@@ -96,30 +73,27 @@ int StudentWorld::move()
 
 void StudentWorld::cleanUp()
 {
-    // Creating a vector iterator p
-    vector<Actor*>::iterator p;
-    // Looping through the vector of actors and deleting each using the iterator
-    for(p = m_actors.begin(); p != m_actors.end();)
+    vector<Actor*>::iterator p; // Creating a vector iterator p
+    for(p = m_actors.begin(); p != m_actors.end();) // Looping through the vector of actors
     {
-        delete (*p);
+        delete (*p); // deleting each actor using the iterator
         p = m_actors.erase(p);
     }
-    // Deleting the player
     if(!playerDeleted)
     {
         playerDeleted = true;
-        delete m_player;
+        delete m_player; // Deleting the player
     }
 }
 
 bool StudentWorld::isBarrierHere(int x, int y)
 {
     vector<Actor*>::iterator p;
-    for(p = m_actors.begin(); p != m_actors.end(); p++)
+    for(p = m_actors.begin(); p != m_actors.end(); p++) // Looping through all actors
     {
-       if((*p)->isImmovable() && (*p)->getX() == x && (*p)->getY() == y)
+       if((*p)->immovable() && (*p)->getX() == x && (*p)->getY() == y) // checking if actors are immovable
        {
-            return true;
+            return true; // return true indicating presence of a barrier
        }
     }
     return false;

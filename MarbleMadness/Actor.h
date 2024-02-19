@@ -3,8 +3,6 @@
 
 #include "GraphObject.h"
 
-// Students:  Add code to this file, Actor.cpp, StudentWorld.h, and StudentWorld.cpp
-
 class StudentWorld;
 
 class Actor : public GraphObject
@@ -12,11 +10,11 @@ class Actor : public GraphObject
 public:
     Actor(StudentWorld* sw, int imageID, int initX, int initY, int dir = none);
     virtual ~Actor();
-    virtual void doSomething() = 0;
-    virtual bool isImmovable() const;
-    StudentWorld* getWorld() const;
+    virtual void doSomething() = 0; // doSomething function to be called in StudentWorld's move function
+    virtual bool immovable() const; // immovable function default set to true
+    StudentWorld* getWorld() const; // getWorld function to return each actor's StudentWorld
 private:
-    StudentWorld* m_studentWorld;
+    StudentWorld* m_studentWorld; // data member so each actor knows its StudentWorld
 };
 
 class Wall : public Actor
@@ -24,9 +22,7 @@ class Wall : public Actor
 public:
     Wall(StudentWorld* sw, int imageID, int initX, int initY);
     virtual void doSomething();
-    virtual bool isImmovable() const;
 private:
-    
 };
 
 class Player : public Actor 
@@ -34,9 +30,10 @@ class Player : public Actor
 public:
     Player(StudentWorld* sw, int imageID, int initX, int initY, int dir);
     virtual void doSomething();
+    virtual bool immovable() const;
 private:
-    int m_health;
-    int m_peas;
+    int m_health; // data member for health points
+    int m_peas; // data member for pea ammo
 };
 
 #endif // ACTOR_H_
