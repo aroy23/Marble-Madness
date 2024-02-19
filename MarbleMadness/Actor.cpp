@@ -7,6 +7,19 @@ Actor::Actor(StudentWorld* sw, int imageID, int initX, int initY)
     setVisible(true);
 }
 
+Actor::~Actor()
+{
+}
+
+Wall::Wall(StudentWorld* sw, int imageID, int initX, int initY)
+: Actor(sw, imageID, initX, initY)
+{
+}
+
+Player::Player(StudentWorld* sw, int imageID, int initX, int initY)
+ : Actor(sw, imageID, initX, initY)
+{
+}
 
 
 // Students:  Add code to this file, Actor.h, StudentWorld.h, and StudentWorld.cpp

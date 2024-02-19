@@ -7,23 +7,28 @@
 
 class StudentWorld;
 
-class Actor : GraphObject
+class Actor : public GraphObject
 {
 public:
     Actor(StudentWorld* sw, int imageID, int initX, int initY);
-    //virtual ~Actor();
+    virtual ~Actor();
 private:
     StudentWorld* m_studentWorld;
 };
 
-class Wall : Actor 
+class Wall : public Actor
 {
-
+public:
+    Wall(StudentWorld* sw, int imageID, int initX, int initY);
+private:
+    
 };
 
-class Player : Actor 
+class Player : public Actor 
 {
-    
+public:
+    Player(StudentWorld* sw, int imageID, int initX, int initY);
+private:
 };
 
 #endif // ACTOR_H_
