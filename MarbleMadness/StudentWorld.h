@@ -13,14 +13,16 @@ class Actor;
 class StudentWorld : public GameWorld
 {
 public:
-  StudentWorld(std::string assetPath);
-  virtual int init();
-  virtual int move();
-  virtual void cleanUp();
-
+    StudentWorld(std::string assetPath);
+    ~StudentWorld();
+    virtual int init();
+    virtual int move();
+    virtual void cleanUp();
+    bool isBarrierHere(int x, int y);
 private:
     std::vector<Actor*> m_actors;
     Actor* m_player;
+    bool playerDeleted;
 };
 
 #endif // STUDENTWORLD_H_

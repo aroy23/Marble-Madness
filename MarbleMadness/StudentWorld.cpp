@@ -15,19 +15,27 @@ StudentWorld::StudentWorld(string assetPath)
 : GameWorld(assetPath)
 {
     m_player = nullptr;
+    playerDeleted = false;
+}
+
+StudentWorld::~StudentWorld()
+{
+    // Destructor and cleanup do the same thing so the destructor just calls cleanup
+    cleanUp();
 }
 
 int StudentWorld::init()
 {
+    // Using to_string with getLevel to load the level file
     string currLevel = "level0" + to_string(getLevel()) + ".txt";
     Level lev(assetPath());
     Level::LoadResult result = lev.loadLevel(currLevel);
     if(result == Level::load_fail_file_not_found || result == Level:: load_fail_bad_format)
     {
-        cerr << "Error Loading" << endl;
-        return GWSTATUS_CONTINUE_GAME;
+        return -1;
     }
     
+    // Creating actors based on the level file
     for(int x = 0; x < VIEW_WIDTH; x++)
     {
         for(int y = 0; y < VIEW_HEIGHT; y++)
@@ -35,7 +43,7 @@ int StudentWorld::init()
             Level::MazeEntry item = lev.getContentsOf(x, y);
             if(item == Level::player)
             {
-                m_player = new Player(this, IID_PLAYER, x, y);
+                m_player = new Player(this, IID_PLAYER, x, y, GraphObject::right);
                 cerr << "The Player is at x = " << x << " and y = " << y << endl;
             }
             if(item == Level::wall)
@@ -50,6 +58,7 @@ int StudentWorld::init()
 }
 
 /*
+ 
  012345678911234
 4###############
 3#      @      #
@@ -71,14 +80,19 @@ int StudentWorld::init()
 
 int StudentWorld::move()
 {
-    // This code is here merely to allow the game to build, run, and terminate after you type q
-
     setGameStatText("Game will end when you type q");
+    // Asking Player to doSomething
+    m_player->doSomething();
+    
+    // Asking Actors to doSomething
+    vector<Actor*>::iterator p;
+    for(p = m_actors.begin(); p != m_actors.end(); p++)
+    {
+        (*p)->doSomething();
+    }
     
 	return GWSTATUS_CONTINUE_GAME;
 }
-
-
 
 void StudentWorld::cleanUp()
 {
@@ -91,5 +105,23 @@ void StudentWorld::cleanUp()
         p = m_actors.erase(p);
     }
     // Deleting the player
-    delete m_player;
+    if(!playerDeleted)
+    {
+        playerDeleted = true;
+        delete m_player;
+    }
 }
+
+bool StudentWorld::isBarrierHere(int x, int y)
+{
+    vector<Actor*>::iterator p;
+    for(p = m_actors.begin(); p != m_actors.end(); p++)
+    {
+       if((*p)->isImmovable() && (*p)->getX() == x && (*p)->getY() == y)
+       {
+            return true;
+       }
+    }
+    return false;
+}
+
