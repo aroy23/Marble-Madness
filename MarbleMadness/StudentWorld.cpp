@@ -1,12 +1,12 @@
 #include "StudentWorld.h"
 #include "GameConstants.h"
-#include <string>
 #include "Actor.h"
+#include <string>
 using namespace std;
 
 GameWorld* createStudentWorld(string assetPath)
 {
-	return new StudentWorld(assetPath);
+    return new StudentWorld(assetPath);
 }
 
 
@@ -48,8 +48,13 @@ int StudentWorld::init()
             }
             if(item == Level::wall)
             {
-                m_actors.push_back(new Wall(this, IID_WALL, x, y));
+                m_actors.push_back(new Wall(this, IID_WALL, x, y, GraphObject::none));
                 cerr << "A Wall is at x = " << x << " and y = " << y << endl;
+            }
+            if(item == Level::marble)
+            {
+                m_actors.push_back(new Marble(this, IID_MARBLE, x, y, GraphObject::none));
+                cerr << "A Marble is at x = " << x << " and y = " << y << endl;
             }
         }
     }
@@ -59,16 +64,38 @@ int StudentWorld::init()
 
 int StudentWorld::move()
 {
-    setGameStatText("Game will end when you type q");
-    m_player->doSomething(); // Asking Player to doSomething
-    
     vector<Actor*>::iterator p;
     for(p = m_actors.begin(); p != m_actors.end(); p++)
     {
         (*p)->doSomething(); // Asking Actors to doSomething
+        if(!m_player->isAlive())
+        {
+            decLives();
+            return GWSTATUS_PLAYER_DIED;
+        }
+    }
+    m_player->doSomething(); // Asking Player to doSomething
+    if(!m_player->isAlive())
+    {
+        decLives();
+        return GWSTATUS_PLAYER_DIED;
+    }
+
+    vector<Actor*>::iterator q;
+    for(q = m_actors.begin(); q != m_actors.end();)
+    {
+        if(!(*q)->isAlive())
+        {
+            delete (*q);
+            q = m_actors.erase(q);
+        }
+        else
+        {
+            q++;
+        }
     }
     
-	return GWSTATUS_CONTINUE_GAME;
+    return GWSTATUS_CONTINUE_GAME;
 }
 
 void StudentWorld::cleanUp()
@@ -91,11 +118,68 @@ bool StudentWorld::isBarrierHere(int x, int y)
     vector<Actor*>::iterator p;
     for(p = m_actors.begin(); p != m_actors.end(); p++) // Looping through all actors
     {
-       if((*p)->immovable() && (*p)->getX() == x && (*p)->getY() == y) // checking if actors are immovable
-       {
+        if((*p)->isStationary() && (*p)->getX() == x && (*p)->getY() == y) // checking if actors are stationary
+        {
             return true; // return true indicating presence of a barrier
-       }
+        }
     }
     return false;
 }
 
+Actor* StudentWorld::actorHere(int x, int y)
+{
+    vector<Actor*>::iterator p;
+    for(p = m_actors.begin(); p != m_actors.end(); p++) // Looping through all actors
+    {
+        if((*p)->getX() == x && (*p)->getY() == y) // checking if actor is on grid at x y
+        {
+            return (*p); // returning actor
+        }
+    }
+    return nullptr;
+}
+
+bool StudentWorld::pushIfBarrierMarble(int x, int y, int dir)
+{
+    Marble* p = dynamic_cast<Marble*>(actorHere(x, y));
+    if(p != nullptr)
+    {
+        p->push(dir);
+        return true;
+    }
+    return false;
+}
+
+bool StudentWorld::entityHere(int x, int y)
+{
+    Actor* p = actorHere(x, y);
+    if(p != nullptr)
+    {
+        Entity* q = dynamic_cast<Entity*>(p);
+        if(q != nullptr)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+void StudentWorld::firePea(int x, int y, int dir)
+{
+    if(dir == GraphObject::right)
+    {
+        m_actors.push_back(new Pea(this, IID_PEA, x+1, y, dir));
+    }
+    else if(dir == GraphObject::left)
+    {
+        m_actors.push_back(new Pea(this, IID_PEA, x-1, y, dir));
+    }
+    else if(dir == GraphObject::up)
+    {
+        m_actors.push_back(new Pea(this, IID_PEA, x, y+1, dir));
+    }
+    else if(dir == GraphObject::down)
+    {
+        m_actors.push_back(new Pea(this, IID_PEA, x, y-1, dir));
+    }
+}
