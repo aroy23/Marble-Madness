@@ -48,12 +48,12 @@ int StudentWorld::init()
             }
             if(item == Level::wall)
             {
-                m_actors.push_back(new Wall(this, IID_WALL, x, y, GraphObject::none));
+                m_actors.push_back(new Wall(this, IID_WALL, x, y));
                 cerr << "A Wall is at x = " << x << " and y = " << y << endl;
             }
             if(item == Level::marble)
             {
-                m_actors.push_back(new Marble(this, IID_MARBLE, x, y, GraphObject::none));
+                m_actors.push_back(new Marble(this, IID_MARBLE, x, y));
                 cerr << "A Marble is at x = " << x << " and y = " << y << endl;
             }
         }

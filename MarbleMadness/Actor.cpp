@@ -15,8 +15,8 @@ Entity::Entity(StudentWorld* sw, int imageID, int initX, int initY, int hp, int 
 {}
 
 // Wall Constructor
-Wall::Wall(StudentWorld* sw, int imageID, int initX, int initY, int dir)
-: Actor(sw, imageID, initX, initY, dir)
+Wall::Wall(StudentWorld* sw, int imageID, int initX, int initY)
+: Actor(sw, imageID, initX, initY)
 {
     setVisible(true); // Setting Wall to be Visible
 }
@@ -29,8 +29,8 @@ Player::Player(StudentWorld* sw, int imageID, int initX, int initY, int dir)
 }
 
 // Marble Constructor
-Marble::Marble(StudentWorld* sw, int imageID, int initX, int initY, int dir)
-: Entity(sw, imageID, initX, initY, 10, dir)
+Marble::Marble(StudentWorld* sw, int imageID, int initX, int initY)
+: Entity(sw, imageID, initX, initY, 10)
 {
     setVisible(true); // Seting Marble to be Visible
 }

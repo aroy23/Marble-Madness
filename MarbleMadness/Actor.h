@@ -8,7 +8,7 @@ class StudentWorld;
 class Actor : public GraphObject
 {
 public:
-    Actor(StudentWorld* sw, int imageID, int initX, int initY, int dir);
+    Actor(StudentWorld* sw, int imageID, int initX, int initY, int dir = none);
     virtual ~Actor();
     virtual void doSomething() = 0; // doSomething function to be called in StudentWorld's move function
     virtual bool isStationary() const; // immovable function default set to true
@@ -23,7 +23,7 @@ private:
 class Wall : public Actor
 {
 public:
-    Wall(StudentWorld* sw, int imageID, int initX, int initY, int dir);
+    Wall(StudentWorld* sw, int imageID, int initX, int initY);
     virtual void doSomething();
 private:
 };
@@ -31,7 +31,7 @@ private:
 class Entity : public Actor
 {
 public:
-    Entity(StudentWorld* sw, int imageID, int initX, int initY, int hp, int dir);
+    Entity(StudentWorld* sw, int imageID, int initX, int initY, int hp, int dir = none);
     virtual void doSomething() = 0;
     void takeDamage(); // reduces health
 private:
@@ -52,7 +52,7 @@ private:
 class Marble : public Entity
 {
 public:
-    Marble(StudentWorld* sw, int imageID, int initX, int initY, int dir);
+    Marble(StudentWorld* sw, int imageID, int initX, int initY);
     virtual void doSomething();
     void push(int dir);
 };
