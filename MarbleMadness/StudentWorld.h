@@ -7,6 +7,8 @@
 #include <vector>
 
 class Actor;
+class Player;
+class Pit;
 
 class StudentWorld : public GameWorld
 {
@@ -16,15 +18,35 @@ public:
     virtual int init();
     virtual int move();
     virtual void cleanUp();
+    
+    void levelFinished();
+    std::string formatDisplayText(int score, int level, int lives, int health, int ammo, int bonus);
+    void setDisplayText();
+    
+    void crystalObtained();
+    int getCrystals();
+    
+    bool canNonMarbleEntityMoveHere(int x, int y);
+    bool canMarbleEntityMoveHere(int x, int y);
+    bool pushIfBarrierMarbleHere(int x, int y, int dir);
+    Pit* retrieveKnownPit(int x, int y);
+    
+    bool damageActorWithPeaIfHere(int x, int y);
     void firePea(int x, int y, int dir);
-    bool isBarrierHere(int x, int y); // Function to return if a barrier is at argument coords
-    bool pushIfBarrierMarble(int x, int y, int dir); // Function to return if a Barrier is a marble
-    bool entityHere(int x, int y); // Function to return if entity is present at coords
-    Actor* actorHere(int x, int y); // Function to return actor present at x, y coord
+
+    bool playerHere(int x, int y);
+    Player* retrievePlayer();
 private:
+    Actor* isActorHere(int x, int y);
+    int m_crystals;
+    bool m_levelComplete;
+    int m_bonus = 1000;
     std::vector<Actor*> m_actors; // Vector containing all actors but player
-    Actor* m_player; // Player Actor
-    bool playerDeleted; // bool marker to ensure player is only deleted once
+    Player* m_player; // Player Actor
 };
 
 #endif // STUDENTWORLD_H_
+
+
+
+

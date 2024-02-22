@@ -1,72 +1,96 @@
 #include "Actor.h"
 #include "StudentWorld.h"
 
-// Actor Constructor and Destructor
-Actor::Actor(StudentWorld* sw, int imageID, int initX, int initY, int dir)
-: GraphObject(imageID, initX, initY, dir), m_studentWorld(sw), m_dead(false)
-{}
-
 Actor::~Actor()
 {}
 
-// Entity Constructor
-Entity::Entity(StudentWorld* sw, int imageID, int initX, int initY, int hp, int dir)
-: Actor(sw, imageID, initX, initY, dir), m_health(hp)
+Actor::Actor(StudentWorld* sw, int imageID, int initX, int initY, int dir)
+: GraphObject(imageID, initX, initY, dir)
+{
+    m_studentWorld = sw;
+    m_dead = false;
+}
+
+EntityBarrier::EntityBarrier(StudentWorld* sw, int imageID, int initX, int initY, int dir)
+: Actor(sw, imageID, initX, initY, dir)
 {}
 
-// Wall Constructor
-Wall::Wall(StudentWorld* sw, int imageID, int initX, int initY)
-: Actor(sw, imageID, initX, initY)
+MarbleBarrier::MarbleBarrier(StudentWorld* sw, int imageID, int initX, int initY, int dir)
+: Actor(sw, imageID, initX, initY, dir)
+{}
+
+Entity::Entity(StudentWorld* sw, int imageID, int initX, int initY, int hp, int dir)
+: Actor(sw, imageID, initX, initY, dir)
 {
-    setVisible(true); // Setting Wall to be Visible
+    m_health = hp;
 }
 
-// Player Constructor
 Player::Player(StudentWorld* sw, int imageID, int initX, int initY, int dir)
-: Entity(sw, imageID, initX, initY, 20, dir), m_peas(20)
+: Entity(sw, imageID, initX, initY, 20, dir)
 {
-    setVisible(true); // Setting Player to be Visible
+    setVisible(true);
+    m_peas = 20;
 }
 
-// Marble Constructor
 Marble::Marble(StudentWorld* sw, int imageID, int initX, int initY)
 : Entity(sw, imageID, initX, initY, 10)
 {
-    setVisible(true); // Seting Marble to be Visible
+    setVisible(true);
 }
 
-// Pea Constructor
+Wall::Wall(StudentWorld* sw, int imageID, int initX, int initY)
+: EntityBarrier(sw, imageID, initX, initY)
+{
+    setVisible(true);
+}
+
 Pea::Pea(StudentWorld* sw, int imageID, int initX, int initY, int dir)
 : Actor(sw, imageID, initX, initY, dir)
 {
-    setVisible(true); // Setting Pea to be Visible
+    setVisible(true);
 }
 
-// Actor Functions
-StudentWorld* Actor::getWorld() const
+Pit::Pit(StudentWorld* sw, int imageID, int initX, int initY)
+: EntityBarrier(sw, imageID, initX, initY)
 {
-    return m_studentWorld; // Returning the StudentWorld
+    m_marbleOnMe = nullptr;
+    setVisible(true);
 }
 
-bool Actor::isStationary() const
+Crystal::Crystal(StudentWorld* sw, int imageID, int initX, int initY)
+: MarbleBarrier(sw, imageID, initX, initY)
 {
-    return true; // Most actors are immovable so return true;
+    setVisible(true);
 }
 
-bool Actor::isAlive() const
+Exit::Exit(StudentWorld* sw, int imageID, int initX, int initY)
+: MarbleBarrier(sw, imageID, initX, initY)
 {
-    return !m_dead; // Returning if actor is alive or not
+    m_revealed = false;
+    setVisible(false);
 }
 
-void Actor::setDead()
+Goodie::Goodie(StudentWorld* sw, int imageID, int initX, int initY)
+: MarbleBarrier(sw, imageID, initX, initY)
 {
-    m_dead = true;
+    setVisible(true);
 }
+
+ExtraLifeGoodie::ExtraLifeGoodie(StudentWorld* sw, int imageID, int initX, int initY)
+: Goodie(sw, imageID, initX, initY)
+{}
+
+RestoreHealthGoodie::RestoreHealthGoodie(StudentWorld* sw, int imageID, int initX, int initY)
+ : Goodie(sw, imageID, initX, initY)
+{}
+
+AmmoGoodie::AmmoGoodie(StudentWorld* sw, int imageID, int initX, int initY)
+ : Goodie(sw, imageID, initX, initY)
+{}
 
 // Entity Functions
-void Entity::takeDamage()
-{
-    m_health -= 2;
+void Entity::takeDamage() {
+    getHit();
     if(m_health <= 0)
     {
         setDead();
@@ -77,69 +101,58 @@ void Entity::takeDamage()
 void Player::doSomething()
 {
     int key;
-    if (getWorld()->getKey(key)) // If a key is pressed get that key
+    if (getWorld()->getKey(key))
     {
-        if (key == KEY_PRESS_RIGHT) // Moving right
+        if (key == KEY_PRESS_RIGHT)
         {
             setDirection(right);
-            if(!getWorld()->isBarrierHere(getX()+1, getY())) // If no barrier preventing movement, move
+            
+            if((getWorld()->retrieveKnownPit(getX()+1, getY()) != nullptr && getWorld()->retrieveKnownPit(getX()+1, getY())->getmarbleOnMe() != nullptr) || getWorld()->canNonMarbleEntityMoveHere(getX()+1, getY()))
             {
                 moveTo(getX()+1, getY());
             }
-            else if(getWorld()->pushIfBarrierMarble(getX()+1, getY(), right)) // if the barrier is a marble move if possible
+            else if(getWorld()->pushIfBarrierMarbleHere(getX()+1, getY(), right))
             {
-                if(!getWorld()->isBarrierHere(getX()+1, getY()))
-                {
-                    moveTo(getX()+1, getY());
-                }
+                moveTo(getX()+1, getY());
             }
         }
-        if(key == KEY_PRESS_LEFT) // Moving left
+        if(key == KEY_PRESS_LEFT)
         {
             setDirection(left);
-            if(!getWorld()->isBarrierHere(getX()-1, getY())) // If no barrier preventing movement, move
+            if((getWorld()->retrieveKnownPit(getX()-1, getY()) != nullptr && getWorld()->retrieveKnownPit(getX()-1, getY())->getmarbleOnMe() != nullptr) || getWorld()->canNonMarbleEntityMoveHere(getX()-1, getY()))
             {
                 moveTo(getX()-1, getY());
             }
-            else if(getWorld()->pushIfBarrierMarble(getX()-1, getY(), left)) // if the barrier is a marble move if possible
+            else if(getWorld()->pushIfBarrierMarbleHere(getX()-1, getY(), left))
             {
-                if(!getWorld()->isBarrierHere(getX()-1, getY()))
-                {
-                    moveTo(getX()-1, getY());
-                }
+                moveTo(getX()-1, getY());
             }
         }
-        if(key == KEY_PRESS_UP) // Moving up
+        if(key == KEY_PRESS_UP)
         {
             setDirection(up);
-            if(!getWorld()->isBarrierHere(getX(), getY()+1)) // If no barrier preventing movement, move
+            if((getWorld()->retrieveKnownPit(getX(), getY()+1) != nullptr && getWorld()->retrieveKnownPit(getX(), getY()+1)->getmarbleOnMe() != nullptr) || getWorld()->canNonMarbleEntityMoveHere(getX(), getY()+1))
             {
                 moveTo(getX(), getY()+1);
             }
-            else if(getWorld()->pushIfBarrierMarble(getX(), getY()+1, up)) // if the barrier is a marble move if possible
+            else if(getWorld()->pushIfBarrierMarbleHere(getX(), getY()+1, up))
             {
-                if(!getWorld()->isBarrierHere(getX(), getY()+1))
-                {
-                    moveTo(getX(), getY()+1);
-                }
+                moveTo(getX(), getY()+1);
             }
         }
-        if(key == KEY_PRESS_DOWN) // Moving down
+        if(key == KEY_PRESS_DOWN)
         {
             setDirection(down);
-            if(!getWorld()->isBarrierHere(getX(), getY()-1)) // If no barrier preventing movement, move
+            if((getWorld()->retrieveKnownPit(getX(), getY()-1) != nullptr && getWorld()->retrieveKnownPit(getX(), getY()-1)->getmarbleOnMe() != nullptr) || getWorld()->canNonMarbleEntityMoveHere(getX(), getY()-1))
             {
                 moveTo(getX(), getY()-1);
             }
-            else if(getWorld()->pushIfBarrierMarble(getX(), getY()-1, down)) // if the barrier is a marble move if possible
+            else if(getWorld()->pushIfBarrierMarbleHere(getX(), getY()-1, down))
             {
-                if(!getWorld()->isBarrierHere(getX(), getY()-1))
-                {
-                    moveTo(getX(), getY()-1);
-                }
+                moveTo(getX(), getY()-1);
             }
         }
-        if(key == KEY_PRESS_SPACE) // Attempting to fire
+        if(key == KEY_PRESS_SPACE)
         {
             if(m_peas > 0)
             {
@@ -147,12 +160,25 @@ void Player::doSomething()
                 fire();
             }
         }
+        if(key == KEY_PRESS_ESCAPE)
+        {
+            setDead();
+        }
     }
 }
 
-bool Player::isStationary() const
+void Player::takeDamage()
 {
-    return false; // Setting player to not stationary
+    getHit();
+    if(getHealth() <= 0)
+    {
+        getWorld()->playSound(SOUND_PLAYER_DIE);
+        setDead();
+    }
+    else
+    {
+        getWorld()->playSound(SOUND_PLAYER_IMPACT);
+    }
 }
 
 void Player::fire()
@@ -164,33 +190,54 @@ void Player::fire()
 // Wall Functions
 void Wall::doSomething()
 {
-    return; // Wall should do nothing
+    return;
 }
 
 // Marble Functions
 void Marble::doSomething()
 {
-    return; // Marble should do nothing
+    return;
 }
 
-void Marble::push(int dir)
+bool Marble::push(int dir)
 {
-    if(dir == right && !getWorld()->isBarrierHere(getX()+1, getY())) // If direction is right and no barrier, push
+    if(dir == right && getWorld()->canMarbleEntityMoveHere(getX()+1, getY()))
     {
+        if(getWorld()->retrieveKnownPit(getX()+1, getY()) != nullptr)
+        {
+            getWorld()->retrieveKnownPit(getX()+1, getY())->setmarbleOnMe(this);
+        }
         moveTo(getX()+1, getY());
+        return true;
     }
-    if(dir == left && !getWorld()->isBarrierHere(getX()-1, getY())) // If direction is left and no barrier, push
+    if(dir == left && getWorld()->canMarbleEntityMoveHere(getX()-1, getY()))
     {
+        if(getWorld()->retrieveKnownPit(getX()-1, getY()) != nullptr)
+        {
+            getWorld()->retrieveKnownPit(getX()-1, getY())->setmarbleOnMe(this);
+        }
         moveTo(getX()-1, getY());
+        return true;
     }
-    if(dir == up && !getWorld()->isBarrierHere(getX(), getY()+1)) // If direction is up and no barrier, push
+    if(dir == up && getWorld()->canMarbleEntityMoveHere(getX(), getY()+1))
     {
+        if(getWorld()->retrieveKnownPit(getX(), getY()+1) != nullptr)
+        {
+            getWorld()->retrieveKnownPit(getX(), getY()+1)->setmarbleOnMe(this);
+        }
         moveTo(getX(), getY()+1);
+        return true;
     }
-    if(dir == down && !getWorld()->isBarrierHere(getX(), getY()-1)) // If direction is down and no barrier, push
+    if(dir == down && getWorld()->canMarbleEntityMoveHere(getX(), getY()-1))
     {
+        if(getWorld()->retrieveKnownPit(getX(), getY()-1) != nullptr)
+        {
+            getWorld()->retrieveKnownPit(getX(), getY()-1)->setmarbleOnMe(this);
+        }
         moveTo(getX(), getY()-1);
+        return true;
     }
+    return false;
 }
 
 // Pea Functions
@@ -200,13 +247,7 @@ void Pea::doSomething()
     {
         return;
     }
-    if(getWorld()->entityHere(getX(), getY()))
-    {
-        Entity* p = dynamic_cast<Entity*>(getWorld()->actorHere(getX(), getY()));
-        p->takeDamage();
-        setDead();
-    }
-    else if(getWorld()->isBarrierHere(getX(), getY()))
+    if(getWorld()->damageActorWithPeaIfHere(getX(), getY()))
     {
         setDead();
     }
@@ -229,30 +270,111 @@ void Pea::doSomething()
         {
             moveTo(getX(), getY()-1);
         }
-        if(getWorld()->entityHere(getX(), getY()))
-        {
-            Entity* p = dynamic_cast<Entity*>(getWorld()->actorHere(getX(), getY()));
-            p->takeDamage();
-            setDead();
-        }
-        else if(getWorld()->isBarrierHere(getX(), getY()))
+        if(getWorld()->damageActorWithPeaIfHere(getX(), getY()))
         {
             setDead();
         }
     }
+    
 }
 
-bool Pea::isStationary() const
+// Pit Functions
+void Pit::doSomething()
 {
-    return false; // Setting pea to not stationary
+    if(!isAlive())
+    {
+        return;
+    }
+    if(getmarbleOnMe() != nullptr)
+    {
+        getmarbleOnMe()->setDead();
+        setDead();
+    }
 }
 
+// Crystal Functions
+void Crystal::doSomething()
+{
+    if(!isAlive())
+    {
+        return;
+    }
+    if(getWorld()->playerHere(getX(), getY()))
+    {
+        getWorld()->crystalObtained();
+        getWorld()->increaseScore(50);
+        setDead();
+        getWorld()->playSound(SOUND_GOT_GOODIE);
+    }
+}
 
+// Exit Functions
+void Exit::doSomething()
+{
+    if(!m_revealed && getWorld()->getCrystals() == 0)
+    {
+        m_revealed = true;
+        setVisible(true);
+        getWorld()->playSound(SOUND_REVEAL_EXIT);
+    }
+    else if(m_revealed && getWorld()->playerHere(getX(), getY()))
+    {
+        getWorld()->playSound(SOUND_FINISHED_LEVEL);
+        getWorld()->levelFinished();
+    }
+}
 
+// Goodie Functions
+bool Goodie::gotGoodie(Goodie* g, int x, int y, int score)
+{
+    if(getWorld()->playerHere(x, y))
+    {
+        g->getWorld()->increaseScore(score);
+        g->setDead();
+        g->getWorld()->playSound(SOUND_GOT_GOODIE);
+        return true;
+    }
+    return false;
+}
 
+// ExtraLifeGoodie Functions
+void ExtraLifeGoodie::doSomething()
+{
+    if(!isAlive())
+    {
+        return;
+    }
+    if(gotGoodie(this, getX(), getY(), 1000))
+    {
+        getWorld()->incLives();
+    }
+}
 
+// RestoreHealthGoodie Functions
+void RestoreHealthGoodie::doSomething()
+{
+    if(!isAlive())
+    {
+        return;
+    }
+    if(gotGoodie(this, getX(), getY(), 500))
+    {
+        getWorld()->retrievePlayer()->restoreHealth();
+    }
+}
 
-
+// AmmoGoodie Functions
+void AmmoGoodie::doSomething()
+{
+    if(!isAlive())
+    {
+        return;
+    }
+    if(gotGoodie(this, getX(), getY(), 100))
+    {
+        getWorld()->retrievePlayer()->incPeas();
+    }
+}
 
 
 

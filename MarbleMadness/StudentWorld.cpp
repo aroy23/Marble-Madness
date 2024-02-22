@@ -2,6 +2,8 @@
 #include "GameConstants.h"
 #include "Actor.h"
 #include <string>
+#include <iostream>
+#include <sstream>
 using namespace std;
 
 GameWorld* createStudentWorld(string assetPath)
@@ -9,13 +11,14 @@ GameWorld* createStudentWorld(string assetPath)
     return new StudentWorld(assetPath);
 }
 
-
 // StudentWorld Constructor and Destructor
 StudentWorld::StudentWorld(string assetPath)
 : GameWorld(assetPath)
 {
-    m_player = nullptr; // player starts off as a nullptr before it is created in init function
-    playerDeleted = false;
+    m_levelComplete = false;
+    m_player = nullptr;
+    m_bonus = 1000;
+    m_crystals = 0;
 }
 
 StudentWorld::~StudentWorld()
@@ -23,11 +26,10 @@ StudentWorld::~StudentWorld()
     cleanUp();  // Destructor and cleanup do the same thing so the destructor just calls cleanup
 }
 
-
 // StudentWorld Functions
 int StudentWorld::init()
 {
-    
+    m_levelComplete = false;
     string currLevel = "level0" + to_string(getLevel()) + ".txt"; // loading file based on current level
     Level lev(assetPath());
     Level::LoadResult result = lev.loadLevel(currLevel);
@@ -35,7 +37,6 @@ int StudentWorld::init()
     {
         return -1; // return -1 if level load failed
     }
-    
     for(int x = 0; x < VIEW_WIDTH; x++) // Creating actors based on the level by looping through the file
     {
         for(int y = 0; y < VIEW_HEIGHT; y++)
@@ -51,6 +52,45 @@ int StudentWorld::init()
                 m_actors.push_back(new Wall(this, IID_WALL, x, y));
                 cerr << "A Wall is at x = " << x << " and y = " << y << endl;
             }
+            if(item == Level::pit)
+            {
+                m_actors.push_back(new Pit(this, IID_PIT, x, y));
+                cerr << "A Pit is at x = " << x << " and y = " << y << endl;
+            }
+            if(item == Level::crystal)
+            {
+                m_crystals++;
+                m_actors.push_back(new Crystal(this, IID_CRYSTAL, x, y));
+                cerr << "A Crystal is at x = " << x << " and y = " << y << endl;
+            }
+            if(item == Level::exit)
+            {
+                m_actors.push_back(new Exit(this, IID_EXIT, x, y));
+                cerr << "An Exit is at x = " << x << " and y = " << y << endl;
+            }
+            if(item == Level::extra_life)
+            {
+                m_actors.push_back(new ExtraLifeGoodie(this, IID_EXTRA_LIFE, x, y));
+                cerr << "An Extra Life Goodie is at x = " << x << " and y = " << y << endl;
+            }
+            if(item == Level::restore_health)
+            {
+                m_actors.push_back(new RestoreHealthGoodie(this, IID_RESTORE_HEALTH, x, y));
+                cerr << "A Restore Health Goodie is at x = " << x << " and y = " << y << endl;
+            }
+            if(item == Level::ammo)
+            {
+                m_actors.push_back(new AmmoGoodie(this, IID_AMMO, x, y));
+                cerr << "An Ammo Goodie is at x = " << x << " and y = " << y << endl;
+            }
+        }
+    }
+    
+    for(int x = 0; x < VIEW_WIDTH; x++)
+    {
+        for(int y = 0; y < VIEW_HEIGHT; y++)
+        {
+            Level::MazeEntry item = lev.getContentsOf(x, y);
             if(item == Level::marble)
             {
                 m_actors.push_back(new Marble(this, IID_MARBLE, x, y));
@@ -67,20 +107,30 @@ int StudentWorld::move()
     vector<Actor*>::iterator p;
     for(p = m_actors.begin(); p != m_actors.end(); p++)
     {
-        (*p)->doSomething(); // Asking Actors to doSomething
+        (*p)->doSomething();
         if(!m_player->isAlive())
         {
             decLives();
             return GWSTATUS_PLAYER_DIED;
         }
+        if(m_levelComplete)
+        {
+            increaseScore(m_bonus);
+            return GWSTATUS_FINISHED_LEVEL;
+        }
     }
-    m_player->doSomething(); // Asking Player to doSomething
+    m_player->doSomething();
     if(!m_player->isAlive())
     {
         decLives();
         return GWSTATUS_PLAYER_DIED;
     }
-
+    if(m_levelComplete)
+    {
+        increaseScore(m_bonus);
+        return GWSTATUS_FINISHED_LEVEL;
+    }
+    
     vector<Actor*>::iterator q;
     for(q = m_actors.begin(); q != m_actors.end();)
     {
@@ -95,71 +145,128 @@ int StudentWorld::move()
         }
     }
     
+    if(m_bonus > 0)
+    {
+        m_bonus--;
+    }
+    setDisplayText();
+    
     return GWSTATUS_CONTINUE_GAME;
 }
 
 void StudentWorld::cleanUp()
 {
-    vector<Actor*>::iterator p; // Creating a vector iterator p
-    for(p = m_actors.begin(); p != m_actors.end();) // Looping through the vector of actors
+    vector<Actor*>::iterator p;
+    for(p = m_actors.begin(); p != m_actors.end();)
     {
-        delete (*p); // deleting each actor using the iterator
+        delete (*p);
         p = m_actors.erase(p);
     }
-    if(!playerDeleted)
-    {
-        playerDeleted = true;
-        delete m_player; // Deleting the player
-    }
+    delete m_player;
+    m_player = nullptr;
 }
 
-bool StudentWorld::isBarrierHere(int x, int y)
+void StudentWorld::setDisplayText()
 {
-    vector<Actor*>::iterator p;
-    for(p = m_actors.begin(); p != m_actors.end(); p++) // Looping through all actors
-    {
-        if((*p)->isStationary() && (*p)->getX() == x && (*p)->getY() == y) // checking if actors are stationary
-        {
-            return true; // return true indicating presence of a barrier
-        }
-    }
-    return false;
+    int score = getScore();
+    int level = getLevel();
+    unsigned int bonus = m_bonus;
+    int livesLeft = getLives();
+    int health = m_player->getHealth();
+    int ammo = m_player->getPeas();
+    
+    string s = formatDisplayText(score, level, livesLeft, health, ammo, bonus);
+    setGameStatText(s);
 }
 
-Actor* StudentWorld::actorHere(int x, int y)
+string StudentWorld::formatDisplayText(int score, int level, int lives, int health, int ammo, int bonus)
+{
+    ostringstream oss;
+    oss << "Score: ";
+    oss.fill('0');
+    oss << setw(7) << score << "  Level: ";
+    oss << setw(2) << level << "  Lives: ";
+    oss.fill(' ');
+    oss << setw(2) << lives << "  Health: ";
+    oss << setw(3) << health*5 << "%  Ammo: ";
+    oss << setw(3) << ammo << "  Bonus: ";
+    oss << setw(4) << bonus;
+    
+    string s = oss.str();
+    return s;
+}
+
+void StudentWorld::crystalObtained()
+{
+    m_crystals--;
+}
+
+int StudentWorld::getCrystals()
+{
+    return m_crystals;
+}
+
+void StudentWorld::levelFinished()
+{
+    increaseScore(2000);
+    m_levelComplete = true;
+    m_bonus = 1000;
+    m_crystals = 0;
+}
+
+Actor* StudentWorld::isActorHere(int x, int y)
 {
     vector<Actor*>::iterator p;
-    for(p = m_actors.begin(); p != m_actors.end(); p++) // Looping through all actors
+    for(p = m_actors.begin(); p != m_actors.end(); p++)
     {
-        if((*p)->getX() == x && (*p)->getY() == y) // checking if actor is on grid at x y
+        if((*p)->getX() == x && (*p)->getY() == y)
         {
-            return (*p); // returning actor
+            return (*p);
         }
     }
     return nullptr;
 }
 
-bool StudentWorld::pushIfBarrierMarble(int x, int y, int dir)
+bool StudentWorld::canNonMarbleEntityMoveHere(int x, int y)
 {
-    Marble* p = dynamic_cast<Marble*>(actorHere(x, y));
-    if(p != nullptr)
+    if(isActorHere(x, y) == nullptr || isActorHere(x, y)->canNonMarbleEntityMoveIn())
     {
-        p->push(dir);
         return true;
     }
     return false;
 }
 
-bool StudentWorld::entityHere(int x, int y)
+bool StudentWorld::canMarbleEntityMoveHere(int x, int y)
 {
-    Actor* p = actorHere(x, y);
+    if(isActorHere(x, y) == nullptr || isActorHere(x, y)->canMarbleMoveIn())
+    {
+        return true;
+    }
+    return false;
+}
+
+bool StudentWorld::pushIfBarrierMarbleHere(int x, int y, int dir)
+{
+    Marble* p = dynamic_cast<Marble*>(isActorHere(x, y));
     if(p != nullptr)
     {
-        Entity* q = dynamic_cast<Entity*>(p);
-        if(q != nullptr)
+        if(p->push(dir))
         {
             return true;
         }
+    }
+    return false;
+}
+
+bool StudentWorld::damageActorWithPeaIfHere(int x, int y)
+{
+    if(isActorHere(x, y) != nullptr && !isActorHere(x, y)->canPeaPass())
+    {
+        if(isActorHere(x, y)->hasHealth())
+        {
+            isActorHere(x, y)->takeDamage();
+        }
+        return true;
     }
     return false;
 }
@@ -183,3 +290,32 @@ void StudentWorld::firePea(int x, int y, int dir)
         m_actors.push_back(new Pea(this, IID_PEA, x, y-1, dir));
     }
 }
+
+Pit* StudentWorld::retrieveKnownPit(int x, int y)
+{
+    if(canMarbleEntityMoveHere(x, y) && !canNonMarbleEntityMoveHere(x, y))
+    {
+        Pit* p = dynamic_cast<Pit*>(isActorHere(x, y));
+        return p;
+    }
+    return nullptr;
+}
+
+bool StudentWorld::playerHere(int x, int y)
+{
+    if(m_player->getX() == x && m_player->getY() == y)
+    {
+        return true;
+    }
+    return false;
+}
+
+Player* StudentWorld::retrievePlayer()
+{
+    return m_player;
+}
+
+
+
+
+
