@@ -63,11 +63,6 @@ int StudentWorld::init()
                 m_actors.push_back(new Crystal(this, IID_CRYSTAL, x, y));
                 cerr << "A Crystal is at x = " << x << " and y = " << y << endl;
             }
-            if(item == Level::exit)
-            {
-                m_actors.push_back(new Exit(this, IID_EXIT, x, y));
-                cerr << "An Exit is at x = " << x << " and y = " << y << endl;
-            }
             if(item == Level::extra_life)
             {
                 m_actors.push_back(new ExtraLifeGoodie(this, IID_EXTRA_LIFE, x, y));
@@ -96,6 +91,12 @@ int StudentWorld::init()
                 m_actors.push_back(new Marble(this, IID_MARBLE, x, y));
                 cerr << "A Marble is at x = " << x << " and y = " << y << endl;
             }
+            if(item == Level::exit)
+            {
+                m_actors.push_back(new Exit(this, IID_EXIT, x, y));
+                cerr << "An Exit is at x = " << x << " and y = " << y << endl;
+            }
+            
         }
     }
     
