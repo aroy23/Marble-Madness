@@ -30,7 +30,7 @@ StudentWorld::~StudentWorld()
 int StudentWorld::init()
 {
     m_levelComplete = false;
-    string currLevel = "level0" + to_string(getLevel()) + ".txt"; // loading file based on current level
+    string currLevel = "level0" + to_string(getLevel()) + ".txt"; // FIX THIS USING OSS
     Level lev(assetPath());
     Level::LoadResult result = lev.loadLevel(currLevel);
     if(result == Level::load_fail_file_not_found || result == Level:: load_fail_bad_format)
@@ -54,13 +54,13 @@ int StudentWorld::init()
             }
             if(item == Level::pit)
             {
-                m_actors.push_back(new Pit(this, IID_PIT, x, y));
+                m_actors.push_front(new Pit(this, IID_PIT, x, y));
                 cerr << "A Pit is at x = " << x << " and y = " << y << endl;
             }
             if(item == Level::crystal)
             {
                 m_crystals++;
-                m_actors.push_back(new Crystal(this, IID_CRYSTAL, x, y));
+                m_actors.push_front(new Crystal(this, IID_CRYSTAL, x, y));
                 cerr << "A Crystal is at x = " << x << " and y = " << y << endl;
             }
             if(item == Level::extra_life)
@@ -78,14 +78,11 @@ int StudentWorld::init()
                 m_actors.push_back(new AmmoGoodie(this, IID_AMMO, x, y));
                 cerr << "An Ammo Goodie is at x = " << x << " and y = " << y << endl;
             }
-        }
-    }
-    
-    for(int x = 0; x < VIEW_WIDTH; x++)
-    {
-        for(int y = 0; y < VIEW_HEIGHT; y++)
-        {
-            Level::MazeEntry item = lev.getContentsOf(x, y);
+            if(item == Level::horiz_ragebot)
+            {
+                m_actors.push_back(new RageBot(this, IID_RAGEBOT, x, y, GraphObject::right));
+                cerr << "An Horizontal RageBot is at x = " << x << " and y = " << y << endl;
+            }
             if(item == Level::marble)
             {
                 m_actors.push_back(new Marble(this, IID_MARBLE, x, y));
@@ -96,16 +93,14 @@ int StudentWorld::init()
                 m_actors.push_back(new Exit(this, IID_EXIT, x, y));
                 cerr << "An Exit is at x = " << x << " and y = " << y << endl;
             }
-            
         }
     }
-    
     return GWSTATUS_CONTINUE_GAME;
 }
 
 int StudentWorld::move()
 {
-    vector<Actor*>::iterator p;
+    list<Actor*>::iterator p;
     for(p = m_actors.begin(); p != m_actors.end(); p++)
     {
         (*p)->doSomething();
@@ -132,7 +127,7 @@ int StudentWorld::move()
         return GWSTATUS_FINISHED_LEVEL;
     }
     
-    vector<Actor*>::iterator q;
+    list<Actor*>::iterator q;
     for(q = m_actors.begin(); q != m_actors.end();)
     {
         if(!(*q)->isAlive())
@@ -158,7 +153,7 @@ int StudentWorld::move()
 
 void StudentWorld::cleanUp()
 {
-    vector<Actor*>::iterator p;
+    list<Actor*>::iterator p;
     for(p = m_actors.begin(); p != m_actors.end();)
     {
         delete (*p);
@@ -218,8 +213,21 @@ void StudentWorld::levelFinished()
 
 Actor* StudentWorld::isActorHere(int x, int y)
 {
-    vector<Actor*>::iterator p;
+    list<Actor*>::iterator p;
     for(p = m_actors.begin(); p != m_actors.end(); p++)
+    {
+        if((*p)->getX() == x && (*p)->getY() == y)
+        {
+            return (*p);
+        }
+    }
+    return nullptr;
+}
+
+Actor* StudentWorld::isActorHereBackwards(int x, int y)
+{
+    list<Actor*>::reverse_iterator p;
+    for(p = m_actors.rbegin(); p != m_actors.rend(); p++)
     {
         if((*p)->getX() == x && (*p)->getY() == y)
         {
@@ -262,34 +270,40 @@ bool StudentWorld::pushIfBarrierMarbleHere(int x, int y, int dir)
 
 bool StudentWorld::damageActorWithPeaIfHere(int x, int y)
 {
-    if(isActorHere(x, y) != nullptr && !isActorHere(x, y)->canPeaPass())
+    if((isActorHereBackwards(x, y) != nullptr && !isActorHereBackwards(x, y)->canPeaPass()) || playerHere(x, y))
     {
-        if(isActorHere(x, y)->hasHealth())
+        if(isActorHereBackwards(x, y)->hasHealth())
         {
-            isActorHere(x, y)->takeDamage();
+            isActorHereBackwards(x, y)->takeDamage();
+        }
+        else if(playerHere(x, y))
+        {
+            retrievePlayer()->takeDamage();
         }
         return true;
     }
     return false;
 }
 
+
+
 void StudentWorld::firePea(int x, int y, int dir)
 {
     if(dir == GraphObject::right)
     {
-        m_actors.push_back(new Pea(this, IID_PEA, x+1, y, dir));
+        m_actors.push_front(new Pea(this, IID_PEA, x+1, y, dir));
     }
     else if(dir == GraphObject::left)
     {
-        m_actors.push_back(new Pea(this, IID_PEA, x-1, y, dir));
+        m_actors.push_front(new Pea(this, IID_PEA, x-1, y, dir));
     }
     else if(dir == GraphObject::up)
     {
-        m_actors.push_back(new Pea(this, IID_PEA, x, y+1, dir));
+        m_actors.push_front(new Pea(this, IID_PEA, x, y+1, dir));
     }
     else if(dir == GraphObject::down)
     {
-        m_actors.push_back(new Pea(this, IID_PEA, x, y-1, dir));
+        m_actors.push_front(new Pea(this, IID_PEA, x, y-1, dir));
     }
 }
 
@@ -330,11 +344,12 @@ bool StudentWorld::canBotFire(int x, int y, int dir)
             }
             for(int i = 1; i < distanceBetween+1; i++)
             {
-                if(isActorHere(x+i, y) != nullptr && !isActorHere(x, y)->canPeaPass())
+                if(isActorHere(x+i, y) != nullptr && !isActorHere(x+i, y)->canPeaPass())
                 {
                     return false;
                 }
             }
+            return true;
         }
     }
     else if(dir == GraphObject::left)
@@ -348,11 +363,12 @@ bool StudentWorld::canBotFire(int x, int y, int dir)
             }
             for(int i = 1; i < distanceBetween+1; i++)
             {
-                if(isActorHere(x-i, y) != nullptr && !isActorHere(x, y)->canPeaPass())
+                if(isActorHere(x-i, y) != nullptr && !isActorHere(x-i, y)->canPeaPass())
                 {
                     return false;
                 }
             }
+            return true;
         }
     }
     else if(dir == GraphObject::up)
@@ -366,11 +382,12 @@ bool StudentWorld::canBotFire(int x, int y, int dir)
             }
             for(int i = 1; i < distanceBetween+1; i++)
             {
-                if(isActorHere(x, y+i) != nullptr && !isActorHere(x, y)->canPeaPass())
+                if(isActorHere(x, y+i) != nullptr && !isActorHere(x, y+i)->canPeaPass())
                 {
                     return false;
                 }
             }
+            return true;
         }
     }
     else if(dir == GraphObject::down)
@@ -384,12 +401,13 @@ bool StudentWorld::canBotFire(int x, int y, int dir)
             }
             for(int i = 1; i < distanceBetween+1; i++)
             {
-                if(isActorHere(x, y-i) != nullptr && !isActorHere(x, y)->canPeaPass())
+                if(isActorHere(x, y-i) != nullptr && !isActorHere(x, y-i)->canPeaPass())
                 {
                     return false;
                 }
             }
+            return true;
         }
     }
-    return true;
+    return false;
 }

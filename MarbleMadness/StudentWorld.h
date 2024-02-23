@@ -4,7 +4,7 @@
 #include "GameWorld.h"
 #include "Level.h"
 #include <string>
-#include <vector>
+#include <list>
 
 class Actor;
 class Player;
@@ -41,10 +41,11 @@ public:
     bool canBotFire(int x, int y, int dir);
 private:
     Actor* isActorHere(int x, int y);
+    Actor* isActorHereBackwards(int x, int y);
     int m_crystals;
     bool m_levelComplete;
     int m_bonus = 1000;
-    std::vector<Actor*> m_actors; // Vector containing all actors but player
+    std::list<Actor*> m_actors; // Vector containing all actors but player
     Player* m_player; // Player Actor
 };
 

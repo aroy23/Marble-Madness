@@ -49,7 +49,16 @@ class Pea : public Actor
 public:
     Pea(StudentWorld* sw, int imageID, int initX, int initY, int dir);
     virtual void doSomething();
+    
     virtual bool canPeaPass() const {
+        return true;
+    }
+    
+    virtual bool canNonMarbleEntityMoveIn() const {
+        return true;
+    }
+    
+    virtual bool canMarbleMoveIn() const {
         return true;
     }
 };
@@ -104,6 +113,18 @@ public:
     Marble(StudentWorld* sw, int imageID, int initX, int initY);
     virtual void doSomething();
     bool push(int dir);
+};
+
+class RageBot : public Entity
+{
+public:
+    RageBot(StudentWorld* sw, int imageID, int initX, int initY, int dir);
+    virtual void doSomething();
+    virtual void takeDamage();
+private:
+    int m_ticks;
+    int m_ticksUntilICanMove;
+    bool canIMove();
 };
 
 class EntityBarrier : public Actor
@@ -203,15 +224,6 @@ class AmmoGoodie : public Goodie
 public:
     AmmoGoodie(StudentWorld* sw, int imageID, int initX, int initY);
     virtual void doSomething();
-};
-
-class RageBot : public Entity
-{
-public:
-    RageBot(StudentWorld* sw, int imageID, int initX, int initY, int dir);
-    virtual void doSomething();
-private:
-    int m_ticks;
 };
 
 #endif // ACTOR_H_

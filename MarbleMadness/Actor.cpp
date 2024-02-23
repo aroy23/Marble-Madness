@@ -81,18 +81,25 @@ ExtraLifeGoodie::ExtraLifeGoodie(StudentWorld* sw, int imageID, int initX, int i
 {}
 
 RestoreHealthGoodie::RestoreHealthGoodie(StudentWorld* sw, int imageID, int initX, int initY)
- : Goodie(sw, imageID, initX, initY)
+: Goodie(sw, imageID, initX, initY)
 {}
 
 AmmoGoodie::AmmoGoodie(StudentWorld* sw, int imageID, int initX, int initY)
- : Goodie(sw, imageID, initX, initY)
+: Goodie(sw, imageID, initX, initY)
 {}
 
 RageBot::RageBot(StudentWorld* sw, int imageID, int initX, int initY, int dir)
 : Entity(sw, imageID, initX, initY, 10, dir)
 {
+    int ticksUntilMove = (28 - getWorld()->getLevel()) / 4;
+    if (ticksUntilMove < 3)
+    {
+        ticksUntilMove = 3;
+    }
+    m_ticksUntilICanMove = ticksUntilMove-1;
+    m_ticks = ticksUntilMove-1;
     setVisible(true);
-    m_ticks = 0;
+    m_ticks = ticksUntilMove-1;
 }
 
 // Entity Functions
@@ -386,11 +393,6 @@ void AmmoGoodie::doSomething()
 // RageBot Functions
 void RageBot::doSomething()
 {
-    int ticks = ((28 - getWorld()->getLevel()) / 4);
-    if (ticks < 3)
-    ticks = 3;
-    m_ticks = ticks-1;
-    
     if(!isAlive())
     {
         return;
@@ -399,6 +401,76 @@ void RageBot::doSomething()
     {
         m_ticks--;
         return;
+    }
+    else if(getWorld()->canBotFire(getX(), getY(), getDirection()))
+    {
+        m_ticks = m_ticksUntilICanMove-1;
+        getWorld()->firePea(getX(), getY(), getDirection());
+        return;
+    }
+    else
+    {
+        m_ticks = m_ticksUntilICanMove-1;
+        if(getDirection() == right)
+        {
+            if(getWorld()->canNonMarbleEntityMoveHere(getX()+1, getY()))
+            {
+                moveTo(getX()+1, getY());
+            }
+            else
+            {
+                setDirection(left);
+            }
+        }
+        else if(getDirection() == left)
+        {
+            if(getWorld()->canNonMarbleEntityMoveHere(getX()-1, getY()))
+            {
+                moveTo(getX()-1, getY());
+            }
+            else
+            {
+                setDirection(right);
+            }
+        }
+        else if(getDirection() == up)
+        {
+            if(getWorld()->canNonMarbleEntityMoveHere(getX(), getY()+1))
+            {
+                moveTo(getX(), getY()+1);
+            }
+            else
+            {
+                setDirection(down);
+            }
+        }
+        else if(getDirection() == down)
+        {
+            if(getWorld()->canNonMarbleEntityMoveHere(getX(), getY()-1))
+            {
+                moveTo(getX(), getY()-1);
+            }
+            else
+            {
+                setDirection(up);
+            }
+        }
+        
+    }
+}
+
+void RageBot::takeDamage()
+{
+    getHit();
+    if(getHealth() <= 0)
+    {
+        getWorld()->playSound(SOUND_ROBOT_DIE);
+        setDead();
+        getWorld()->increaseScore(100);
+    }
+    else
+    {
+        getWorld()->playSound(SOUND_ROBOT_IMPACT);
     }
 }
 
