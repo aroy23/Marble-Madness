@@ -88,6 +88,13 @@ AmmoGoodie::AmmoGoodie(StudentWorld* sw, int imageID, int initX, int initY)
  : Goodie(sw, imageID, initX, initY)
 {}
 
+RageBot::RageBot(StudentWorld* sw, int imageID, int initX, int initY, int dir)
+: Entity(sw, imageID, initX, initY, 10, dir)
+{
+    setVisible(true);
+    m_ticks = 0;
+}
+
 // Entity Functions
 void Entity::takeDamage() {
     getHit();
@@ -373,6 +380,25 @@ void AmmoGoodie::doSomething()
     if(gotGoodie(this, getX(), getY(), 100))
     {
         getWorld()->retrievePlayer()->incPeas();
+    }
+}
+
+// RageBot Functions
+void RageBot::doSomething()
+{
+    int ticks = ((28 - getWorld()->getLevel()) / 4);
+    if (ticks < 3)
+    ticks = 3;
+    m_ticks = ticks-1;
+    
+    if(!isAlive())
+    {
+        return;
+    }
+    if(m_ticks != 0)
+    {
+        m_ticks--;
+        return;
     }
 }
 

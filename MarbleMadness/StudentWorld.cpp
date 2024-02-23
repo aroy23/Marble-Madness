@@ -150,6 +150,7 @@ int StudentWorld::move()
     {
         m_bonus--;
     }
+    
     setDisplayText();
     
     return GWSTATUS_CONTINUE_GAME;
@@ -209,8 +210,8 @@ int StudentWorld::getCrystals()
 
 void StudentWorld::levelFinished()
 {
-    increaseScore(2000);
     m_levelComplete = true;
+    increaseScore(2000);
     m_bonus = 1000;
     m_crystals = 0;
 }
@@ -316,7 +317,79 @@ Player* StudentWorld::retrievePlayer()
     return m_player;
 }
 
-
-
-
-
+bool StudentWorld::canBotFire(int x, int y, int dir)
+{
+    if(dir == GraphObject::right)
+    {
+        if(y == retrievePlayer()->getY() && x < retrievePlayer()->getX())
+        {
+            int distanceBetween = retrievePlayer()->getX()-x-1;
+            if(distanceBetween == 0)
+            {
+                return true;
+            }
+            for(int i = 1; i < distanceBetween+1; i++)
+            {
+                if(isActorHere(x+i, y) != nullptr && !isActorHere(x, y)->canPeaPass())
+                {
+                    return false;
+                }
+            }
+        }
+    }
+    else if(dir == GraphObject::left)
+    {
+        if(y == retrievePlayer()->getY() && x > retrievePlayer()->getX())
+        {
+            int distanceBetween = abs(retrievePlayer()->getX()-x)-1;
+            if(distanceBetween == 0)
+            {
+                return true;
+            }
+            for(int i = 1; i < distanceBetween+1; i++)
+            {
+                if(isActorHere(x-i, y) != nullptr && !isActorHere(x, y)->canPeaPass())
+                {
+                    return false;
+                }
+            }
+        }
+    }
+    else if(dir == GraphObject::up)
+    {
+        if(y == retrievePlayer()->getX() && y < retrievePlayer()->getY())
+        {
+            int distanceBetween = retrievePlayer()->getY()-y-1;
+            if(distanceBetween == 0)
+            {
+                return true;
+            }
+            for(int i = 1; i < distanceBetween+1; i++)
+            {
+                if(isActorHere(x, y+i) != nullptr && !isActorHere(x, y)->canPeaPass())
+                {
+                    return false;
+                }
+            }
+        }
+    }
+    else if(dir == GraphObject::down)
+    {
+        if(y == retrievePlayer()->getX() && y > retrievePlayer()->getY())
+        {
+            int distanceBetween = abs(retrievePlayer()->getY()-y)-1;
+            if(distanceBetween == 0)
+            {
+                return true;
+            }
+            for(int i = 1; i < distanceBetween+1; i++)
+            {
+                if(isActorHere(x, y-i) != nullptr && !isActorHere(x, y)->canPeaPass())
+                {
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}

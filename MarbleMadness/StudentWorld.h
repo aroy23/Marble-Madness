@@ -9,6 +9,7 @@
 class Actor;
 class Player;
 class Pit;
+class Entity;
 
 class StudentWorld : public GameWorld
 {
@@ -36,6 +37,8 @@ public:
 
     bool playerHere(int x, int y);
     Player* retrievePlayer();
+    
+    bool canBotFire(int x, int y, int dir);
 private:
     Actor* isActorHere(int x, int y);
     int m_crystals;

@@ -205,5 +205,14 @@ public:
     virtual void doSomething();
 };
 
+class RageBot : public Entity
+{
+public:
+    RageBot(StudentWorld* sw, int imageID, int initX, int initY, int dir);
+    virtual void doSomething();
+private:
+    int m_ticks;
+};
+
 #endif // ACTOR_H_
 
