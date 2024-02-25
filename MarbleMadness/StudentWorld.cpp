@@ -1,6 +1,7 @@
 #include "StudentWorld.h"
 #include "GameConstants.h"
 #include "Actor.h"
+#include "Level.h"
 #include <string>
 #include <iostream>
 #include <sstream>
@@ -37,7 +38,11 @@ int StudentWorld::init()
     string currLevel = obtainLevel();
     Level lev(assetPath());
     Level::LoadResult result = lev.loadLevel(currLevel);
-    if(result == Level::load_fail_file_not_found || result == Level:: load_fail_bad_format)
+    if(result == Level:: load_fail_file_not_found)
+    {
+        return GWSTATUS_PLAYER_WON;
+    }
+    if(result == Level:: load_fail_bad_format)
     {
         return -1;
     }

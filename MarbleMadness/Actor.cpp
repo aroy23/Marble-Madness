@@ -859,13 +859,12 @@ void ThiefBotFactory::doSomething()
             if(m_mean == true)
             {
                 getWorld()->spawnBot(getX(), getY(), true);
-                getWorld()->playSound(SOUND_ROBOT_BORN);
             }
             else
             {
                 getWorld()->spawnBot(getX(), getY(), false);
-                getWorld()->playSound(SOUND_ROBOT_BORN);
             }
+            getWorld()->playSound(SOUND_ROBOT_BORN);
         }
     }
 }
