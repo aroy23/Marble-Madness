@@ -5,6 +5,7 @@
 
 class StudentWorld;
 class Marble;
+class Goodie;
 
 class Actor : public GraphObject
 {
@@ -12,6 +13,7 @@ public:
     Actor(StudentWorld* sw, int imageID, int initX, int initY, int dir = none);
     virtual ~Actor();
     virtual void doSomething() = 0;
+    void setCanBeStolenStatus(bool state);
     
     bool isAlive() const {
         return !m_dead;
@@ -34,6 +36,18 @@ public:
     virtual bool canPeaPass() const {
         return false;
     }
+    virtual bool canSteal() const {
+        return false;
+    }
+    bool canBeStolen() const {
+        return m_canBeStolen;
+    }
+    virtual bool canBeFilled() const {
+        return false;
+    }
+    virtual bool stealable() const {
+        return false;
+    }
     
     StudentWorld* getWorld() const {
         return m_studentWorld;
@@ -42,6 +56,7 @@ public:
 private:
     StudentWorld* m_studentWorld;
     bool m_dead;
+    bool m_canBeStolen;
 };
 
 class Pea : public Actor
@@ -53,12 +68,7 @@ public:
     virtual bool canPeaPass() const {
         return true;
     }
-    
     virtual bool canNonMarbleEntityMoveIn() const {
-        return true;
-    }
-    
-    virtual bool canMarbleMoveIn() const {
         return true;
     }
 };
@@ -69,17 +79,12 @@ public:
     Entity(StudentWorld* sw, int imageID, int initX, int initY, int hp, int dir = none);
     virtual void doSomething() = 0;
     virtual void takeDamage();
+    void setHealth(int amt);
+    void getHit();
     
-    void getHit() {
-        m_health -= 2;
-    }
     int getHealth() const {
         return m_health;
     }
-    void restoreHealth() {
-        m_health = 20;
-    }
-    
     virtual bool hasHealth() const {
         return true;
     }
@@ -96,10 +101,8 @@ public:
     virtual void doSomething();
     virtual void takeDamage();
     void fire();
+    void incPeas();
     
-    void incPeas() {
-        m_peas += 20;
-    }
     int getPeas() const {
         return m_peas;
     }
@@ -113,18 +116,84 @@ public:
     Marble(StudentWorld* sw, int imageID, int initX, int initY);
     virtual void doSomething();
     bool push(int dir);
+    
+    virtual bool canBeFilled() const {
+        return true;
+    }
 };
 
-class RageBot : public Entity
+class Robot : public Entity
+{
+public:
+    Robot(StudentWorld* sw, int imageID, int initX, int initY, int hp, int dir);
+    virtual void doSomething() = 0;
+    virtual void takeDamage() {
+        return;
+    }
+    void decreaseTicks();
+    void equalizeTicks();
+    
+    int getTicks() const {
+        return m_ticks;
+    }
+private:
+    int m_ticks;
+    int m_ticksUntilICanMove;
+};
+
+class RageBot : public Robot
 {
 public:
     RageBot(StudentWorld* sw, int imageID, int initX, int initY, int dir);
     virtual void doSomething();
     virtual void takeDamage();
+};
+
+class ThiefBot : public Robot
+{
+public:
+    ThiefBot(StudentWorld* sw, int imageID, int initX, int initY, int dir, int hp = 5);
+    virtual void doSomething();
+    virtual void takeDamage();
+    void setMyGoodie(Goodie* g);
+    Goodie* returnMyGoodie() const;
+    void resetSquaresMoved();
+    void increaseSquaresMoved();
+    void setDistanceBeforeTurning(int d);
+    void shootStealMoveOrTurn(bool mean);
+    void thiefBotAttacked();
+    
+    virtual bool canSteal() const {
+        return true;
+    }
+    int getSquaresMoved() const {
+        return m_squaresMoved;
+    }
+    int getDistanceBeforeTurn() const {
+        return m_distanceBeforeTurning;
+    }
+    void gotGoodie() {
+        m_haveGoodie = true;
+    }
+    bool returnGoodieStatus() const {
+        return m_haveGoodie;
+    }
+    
 private:
-    int m_ticks;
-    int m_ticksUntilICanMove;
-    bool canIMove();
+    bool m_haveGoodie;
+    int m_squaresMoved;
+    int m_distanceBeforeTurning;
+    Goodie* m_myGoodie;
+};
+
+class MeanThiefBot : public ThiefBot
+{
+public:
+    MeanThiefBot(StudentWorld* sw, int imageID, int initX, int initY, int dir);
+    virtual void doSomething();
+    virtual void takeDamage();
+private:
+    
 };
 
 class EntityBarrier : public Actor
@@ -154,14 +223,19 @@ public:
     virtual bool canMarbleMoveIn() const{
         return true;
     }
-    Marble* getmarbleOnMe() const {
-        return m_marbleOnMe;
-    }
-    void setmarbleOnMe(Marble* m) {
-        m_marbleOnMe = m;
-    }
+    Marble* getmarbleOnMe() const;
+    void setmarbleOnMe(Marble* m);
 private:
     Marble* m_marbleOnMe;
+};
+
+class ThiefBotFactory : public EntityBarrier
+{
+public:
+    ThiefBotFactory(StudentWorld* sw, int imageID, int initX, int initY, bool meanOrNot);
+    virtual void doSomething();
+private:
+    bool m_mean;
 };
 
 class MarbleBarrier : public Actor
@@ -203,6 +277,10 @@ public:
     Goodie(StudentWorld* sw, int imageID, int initX, int initY);
     virtual void doSomething() = 0;
     bool gotGoodie(Goodie* g, int x, int y, int score);
+    
+    virtual bool stealable() const {
+        return true;
+    }
 };
 
 class ExtraLifeGoodie : public Goodie

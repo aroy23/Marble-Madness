@@ -9,7 +9,7 @@
 class Actor;
 class Player;
 class Pit;
-class Entity;
+class Goodie;
 
 class StudentWorld : public GameWorld
 {
@@ -21,8 +21,6 @@ public:
     virtual void cleanUp();
     
     void levelFinished();
-    std::string formatDisplayText(int score, int level, int lives, int health, int ammo, int bonus);
-    void setDisplayText();
     
     void crystalObtained();
     int getCrystals();
@@ -39,18 +37,29 @@ public:
     Player* retrievePlayer();
     
     bool canBotFire(int x, int y, int dir);
+    Actor* canBotSteal(int x, int y);
+    
+    int countTheBotsAroundMe(int factoryX, int factoryY);
+    bool isThiefBotOnMe(int x, int y);
+    void spawnBot(int x, int y, bool meanOrNot);
+    bool canRobotMoveHere(int x, int y);
+    
+    void moveGoodieToAdjacentOpenSpace(int x, int y, Goodie* g);
 private:
+    std::string obtainLevel();
+    std::string formatDisplayText(int score, int level, int lives, int health, int ammo, int bonus);
+    void setDisplayText();
+    int countVisibleActorsHereExceptExit(int x, int y);
+    void stealGoodie(int x, int y, Actor* a);
+    bool amIInTheRegion(int x, int y, int factoryX, int factoryY);
     Actor* isActorHere(int x, int y);
     Actor* isActorHereBackwards(int x, int y);
+    void startingNewLevel();
     int m_crystals;
     bool m_levelComplete;
     int m_bonus = 1000;
-    std::list<Actor*> m_actors; // Vector containing all actors but player
-    Player* m_player; // Player Actor
+    std::list<Actor*> m_actors;
+    Player* m_player;
 };
 
 #endif // STUDENTWORLD_H_
-
-
-
-

@@ -7,6 +7,8 @@ Actor::~Actor()
 Actor::Actor(StudentWorld* sw, int imageID, int initX, int initY, int dir)
 : GraphObject(imageID, initX, initY, dir)
 {
+    m_canBeStolen = false;
+    setVisible(true);
     m_studentWorld = sw;
     m_dead = false;
 }
@@ -28,15 +30,12 @@ Entity::Entity(StudentWorld* sw, int imageID, int initX, int initY, int hp, int 
 Player::Player(StudentWorld* sw, int imageID, int initX, int initY, int dir)
 : Entity(sw, imageID, initX, initY, 20, dir)
 {
-    setVisible(true);
     m_peas = 20;
 }
 
 Marble::Marble(StudentWorld* sw, int imageID, int initX, int initY)
 : Entity(sw, imageID, initX, initY, 10)
-{
-    setVisible(true);
-}
+{}
 
 Wall::Wall(StudentWorld* sw, int imageID, int initX, int initY)
 : EntityBarrier(sw, imageID, initX, initY)
@@ -46,22 +45,17 @@ Wall::Wall(StudentWorld* sw, int imageID, int initX, int initY)
 
 Pea::Pea(StudentWorld* sw, int imageID, int initX, int initY, int dir)
 : Actor(sw, imageID, initX, initY, dir)
-{
-    setVisible(true);
-}
+{}
 
 Pit::Pit(StudentWorld* sw, int imageID, int initX, int initY)
 : EntityBarrier(sw, imageID, initX, initY)
 {
     m_marbleOnMe = nullptr;
-    setVisible(true);
 }
 
 Crystal::Crystal(StudentWorld* sw, int imageID, int initX, int initY)
 : MarbleBarrier(sw, imageID, initX, initY)
-{
-    setVisible(true);
-}
+{}
 
 Exit::Exit(StudentWorld* sw, int imageID, int initX, int initY)
 : MarbleBarrier(sw, imageID, initX, initY)
@@ -73,7 +67,7 @@ Exit::Exit(StudentWorld* sw, int imageID, int initX, int initY)
 Goodie::Goodie(StudentWorld* sw, int imageID, int initX, int initY)
 : MarbleBarrier(sw, imageID, initX, initY)
 {
-    setVisible(true);
+    setCanBeStolenStatus(true);
 }
 
 ExtraLifeGoodie::ExtraLifeGoodie(StudentWorld* sw, int imageID, int initX, int initY)
@@ -88,8 +82,8 @@ AmmoGoodie::AmmoGoodie(StudentWorld* sw, int imageID, int initX, int initY)
 : Goodie(sw, imageID, initX, initY)
 {}
 
-RageBot::RageBot(StudentWorld* sw, int imageID, int initX, int initY, int dir)
-: Entity(sw, imageID, initX, initY, 10, dir)
+Robot::Robot(StudentWorld* sw, int imageID, int initX, int initY, int hp, int dir)
+: Entity(sw, imageID, initX, initY, hp, dir)
 {
     int ticksUntilMove = (28 - getWorld()->getLevel()) / 4;
     if (ticksUntilMove < 3)
@@ -102,6 +96,35 @@ RageBot::RageBot(StudentWorld* sw, int imageID, int initX, int initY, int dir)
     m_ticks = ticksUntilMove-1;
 }
 
+RageBot::RageBot(StudentWorld* sw, int imageID, int initX, int initY, int dir)
+: Robot(sw, imageID, initX, initY, 10, dir)
+{}
+
+ThiefBot::ThiefBot(StudentWorld* sw, int imageID, int initX, int initY, int dir, int hp)
+: Robot(sw, imageID, initX, initY, hp, dir)
+{
+    m_haveGoodie = false;
+    m_squaresMoved = 0;
+    m_distanceBeforeTurning = randInt(1, 6);
+    m_myGoodie = nullptr;
+}
+
+MeanThiefBot::MeanThiefBot(StudentWorld* sw, int imageID, int initX, int initY, int dir)
+: ThiefBot(sw, imageID, initX, initY, dir, 8)
+{}
+
+ThiefBotFactory::ThiefBotFactory(StudentWorld* sw, int imageID, int initX, int initY, bool meanOrNot)
+: EntityBarrier(sw, imageID, initX, initY)
+{
+    m_mean = meanOrNot;
+}
+
+// Actor Functions
+void Actor::setCanBeStolenStatus(bool state)
+{
+    m_canBeStolen = state;
+}
+
 // Entity Functions
 void Entity::takeDamage() {
     getHit();
@@ -109,6 +132,16 @@ void Entity::takeDamage() {
     {
         setDead();
     }
+}
+
+void Entity::setHealth(int amt)
+{
+    m_health = amt;
+}
+
+void Entity::getHit()
+{
+    m_health -= 2;
 }
 
 // Player Functions
@@ -199,6 +232,11 @@ void Player::fire()
 {
     getWorld()->playSound(SOUND_PLAYER_FIRE);
     getWorld()->firePea(getX(), getY(), getDirection());
+}
+
+void Player::incPeas()
+{
+    m_peas += 20;
 }
 
 // Wall Functions
@@ -306,6 +344,16 @@ void Pit::doSomething()
     }
 }
 
+Marble* Pit::getmarbleOnMe() const 
+{
+    return m_marbleOnMe;
+}
+
+void Pit::setmarbleOnMe(Marble* m)
+{
+    m_marbleOnMe = m;
+}
+
 // Crystal Functions
 void Crystal::doSomething()
 {
@@ -341,7 +389,7 @@ void Exit::doSomething()
 // Goodie Functions
 bool Goodie::gotGoodie(Goodie* g, int x, int y, int score)
 {
-    if(getWorld()->playerHere(x, y))
+    if(getWorld()->playerHere(x, y) && canBeStolen())
     {
         g->getWorld()->increaseScore(score);
         g->setDead();
@@ -373,7 +421,7 @@ void RestoreHealthGoodie::doSomething()
     }
     if(gotGoodie(this, getX(), getY(), 500))
     {
-        getWorld()->retrievePlayer()->restoreHealth();
+        getWorld()->retrievePlayer()->setHealth(20);
     }
 }
 
@@ -390,6 +438,14 @@ void AmmoGoodie::doSomething()
     }
 }
 
+// Robot Functions
+void Robot::decreaseTicks() {
+    m_ticks--;
+}
+void Robot::equalizeTicks() {
+    m_ticks = m_ticksUntilICanMove-1;
+}
+
 // RageBot Functions
 void RageBot::doSomething()
 {
@@ -397,23 +453,23 @@ void RageBot::doSomething()
     {
         return;
     }
-    if(m_ticks != 0)
+    if(getTicks() != 0)
     {
-        m_ticks--;
+        decreaseTicks();
         return;
     }
     else if(getWorld()->canBotFire(getX(), getY(), getDirection()))
     {
-        m_ticks = m_ticksUntilICanMove-1;
+        equalizeTicks();
         getWorld()->firePea(getX(), getY(), getDirection());
         return;
     }
     else
     {
-        m_ticks = m_ticksUntilICanMove-1;
+        equalizeTicks();
         if(getDirection() == right)
         {
-            if(getWorld()->canNonMarbleEntityMoveHere(getX()+1, getY()))
+            if(getWorld()->canRobotMoveHere(getX()+1, getY()))
             {
                 moveTo(getX()+1, getY());
             }
@@ -424,7 +480,7 @@ void RageBot::doSomething()
         }
         else if(getDirection() == left)
         {
-            if(getWorld()->canNonMarbleEntityMoveHere(getX()-1, getY()))
+            if(getWorld()->canRobotMoveHere(getX()-1, getY()))
             {
                 moveTo(getX()-1, getY());
             }
@@ -435,7 +491,7 @@ void RageBot::doSomething()
         }
         else if(getDirection() == up)
         {
-            if(getWorld()->canNonMarbleEntityMoveHere(getX(), getY()+1))
+            if(getWorld()->canRobotMoveHere(getX(), getY()+1))
             {
                 moveTo(getX(), getY()+1);
             }
@@ -446,7 +502,7 @@ void RageBot::doSomething()
         }
         else if(getDirection() == down)
         {
-            if(getWorld()->canNonMarbleEntityMoveHere(getX(), getY()-1))
+            if(getWorld()->canRobotMoveHere(getX(), getY()-1))
             {
                 moveTo(getX(), getY()-1);
             }
@@ -455,7 +511,6 @@ void RageBot::doSomething()
                 setDirection(up);
             }
         }
-        
     }
 }
 
@@ -474,6 +529,344 @@ void RageBot::takeDamage()
     }
 }
 
+// ThiefBot Functions
+void ThiefBot::doSomething()
+{
+    if(!isAlive())
+    {
+        return;
+    }
+    if(getTicks() != 0)
+    {
+        decreaseTicks();
+        return;
+    }
+    shootStealMoveOrTurn(false);
+}
 
+void ThiefBot::thiefBotAttacked()
+{
+    getHit();
+    if(getHealth() <= 0)
+    {
+        if(returnGoodieStatus())
+        {
+            getWorld()->moveGoodieToAdjacentOpenSpace(getX(), getY(), returnMyGoodie());
+            returnMyGoodie()->setVisible(true);
+            returnMyGoodie()->setCanBeStolenStatus(true);
+        }
+        getWorld()->playSound(SOUND_ROBOT_DIE);
+        setDead();
+    }
+    else
+    {
+        getWorld()->playSound(SOUND_ROBOT_IMPACT);
+    }
+}
 
+void ThiefBot::takeDamage()
+{
+    thiefBotAttacked();
+    if(!isAlive())
+    {
+        getWorld()->increaseScore(10);
+    }
+}
+
+void ThiefBot::setMyGoodie(Goodie* g)
+{
+    m_myGoodie = g;
+}
+
+Goodie* ThiefBot::returnMyGoodie() const
+{
+    return m_myGoodie;
+}
+
+void ThiefBot::resetSquaresMoved()
+{
+    m_squaresMoved = 0;
+}
+
+void ThiefBot::increaseSquaresMoved()
+{
+    m_squaresMoved++;
+}
+
+void ThiefBot::setDistanceBeforeTurning(int d)
+{
+    m_distanceBeforeTurning = d;
+}
+
+void ThiefBot::shootStealMoveOrTurn(bool mean)
+{
+    if(mean && getWorld()->canBotFire(getX(), getY(), getDirection()))
+    {
+        equalizeTicks();
+        getWorld()->firePea(getX(), getY(), getDirection());
+        return;
+    }
+    else if(!returnGoodieStatus() && (getWorld()->canBotSteal(getX(), getY()) != nullptr))
+    {
+        equalizeTicks();
+        gotGoodie();
+        getWorld()->playSound(SOUND_ROBOT_MUNCH);
+        return;
+    }
+    else if(getSquaresMoved() < getDistanceBeforeTurn())
+    {
+        equalizeTicks();
+        if(getDirection() == right)
+        {
+            if(getWorld()->canRobotMoveHere(getX()+1, getY()))
+            {
+                moveTo(getX()+1, getY());
+                increaseSquaresMoved();
+                return;
+            }
+        }
+        else if(getDirection() == left)
+        {
+            if(getWorld()->canRobotMoveHere(getX()-1, getY()))
+            {
+                moveTo(getX()-1, getY());
+                increaseSquaresMoved();
+                return;
+            }
+        }
+        else if(getDirection() == up)
+        {
+            if(getWorld()->canRobotMoveHere(getX(), getY()+1))
+            {
+                moveTo(getX(), getY()+1);
+                increaseSquaresMoved();
+                return;
+            }
+        }
+        else if(getDirection() == down)
+        {
+            if(getWorld()->canRobotMoveHere(getX(), getY()-1))
+            {
+                moveTo(getX(), getY()-1);
+                increaseSquaresMoved();
+                return;
+            }
+        }
+    }
+    equalizeTicks();
+    resetSquaresMoved();
+    setDistanceBeforeTurning(randInt(1, 6));
+    int directionPicker= randInt(1, 4);
+    int direction = -1;
+    if(directionPicker == 1)
+    {
+        direction = right;
+    }
+    else if(directionPicker == 2)
+    {
+        direction = left;
+    }
+    else if(directionPicker == 3)
+    {
+        direction = up;
+    }
+    else if(directionPicker == 4)
+    {
+        direction = down;
+    }
+    if(direction == right)
+    {
+        if(getWorld()->canRobotMoveHere(getX()+1, getY()))
+        {
+            setDirection(right);
+            moveTo(getX()+1, getY());
+            increaseSquaresMoved();
+            return;
+        }
+        else if(getWorld()->canRobotMoveHere(getX()-1, getY()))
+        {
+            setDirection(left);
+            moveTo(getX()-1, getY());
+            increaseSquaresMoved();
+            return;
+        }
+        else if(getWorld()->canRobotMoveHere(getX(), getY()+1))
+        {
+            setDirection(up);
+            moveTo(getX(), getY()+1);
+            increaseSquaresMoved();
+            return;
+        }
+        else if(getWorld()->canRobotMoveHere(getX(), getY()-1))
+        {
+            setDirection(down);
+            moveTo(getX(), getY()-1);
+            increaseSquaresMoved();
+            return;
+        }
+        else
+        {
+            setDirection(right);
+            return;
+        }
+    }
+    else if(direction == left)
+    {
+        if(getWorld()->canRobotMoveHere(getX()-1, getY()))
+        {
+            setDirection(left);
+            moveTo(getX()-1, getY());
+            increaseSquaresMoved();
+            return;
+        }
+        else if(getWorld()->canRobotMoveHere(getX()+1, getY()))
+        {
+            setDirection(right);
+            moveTo(getX()+1, getY());
+            increaseSquaresMoved();
+            return;
+        }
+        else if(getWorld()->canRobotMoveHere(getX(), getY()+1))
+        {
+            setDirection(up);
+            moveTo(getX(), getY()+1);
+            increaseSquaresMoved();
+            return;
+        }
+        else if(getWorld()->canRobotMoveHere(getX(), getY()-1))
+        {
+            setDirection(down);
+            moveTo(getX(), getY()-1);
+            increaseSquaresMoved();
+            return;
+        }
+        else
+        {
+            setDirection(left);
+            return;
+        }
+    }
+    else if(direction == up)
+    {
+        if(getWorld()->canRobotMoveHere(getX(), getY()+1))
+        {
+            setDirection(up);
+            moveTo(getX(), getY()+1);
+            increaseSquaresMoved();
+            return;
+        }
+        if(getWorld()->canRobotMoveHere(getX()-1, getY()))
+        {
+            setDirection(left);
+            moveTo(getX()-1, getY());
+            increaseSquaresMoved();
+            return;
+        }
+        else if(getWorld()->canRobotMoveHere(getX()+1, getY()))
+        {
+            setDirection(right);
+            moveTo(getX()+1, getY());
+            increaseSquaresMoved();
+            return;
+        }
+        else if(getWorld()->canRobotMoveHere(getX(), getY()-1))
+        {
+            setDirection(down);
+            moveTo(getX(), getY()-1);
+            increaseSquaresMoved();
+            return;
+        }
+        else
+        {
+            setDirection(up);
+            return;
+        }
+    }
+    else if(direction == down)
+    {
+        if(getWorld()->canRobotMoveHere(getX(), getY()-1))
+        {
+            setDirection(down);
+            moveTo(getX(), getY()-1);
+            increaseSquaresMoved();
+            return;
+        }
+        if(getWorld()->canRobotMoveHere(getX()-1, getY()))
+        {
+            setDirection(left);
+            moveTo(getX()-1, getY());
+            increaseSquaresMoved();
+            return;
+        }
+        else if(getWorld()->canRobotMoveHere(getX()+1, getY()))
+        {
+            setDirection(left);
+            moveTo(getX()+1, getY());
+            increaseSquaresMoved();
+            return;
+        }
+        else if(getWorld()->canRobotMoveHere(getX(), getY()+1))
+        {
+            setDirection(up);
+            moveTo(getX(), getY()+1);
+            increaseSquaresMoved();
+            return;
+        }
+        else
+        {
+            setDirection(down);
+            return;
+        }
+    }
+}
+
+// Mean ThiefBot Functions
+void MeanThiefBot::doSomething()
+{
+    if(!isAlive())
+    {
+        return;
+    }
+    if(getTicks() != 0)
+    {
+        decreaseTicks();
+        return;
+    }
+    shootStealMoveOrTurn(true);
+}
+
+void MeanThiefBot::takeDamage()
+{
+    thiefBotAttacked();
+    if(!isAlive())
+    {
+        getWorld()->increaseScore(20);
+    }
+}
+
+// ThiefBot Factory Functions
+void ThiefBotFactory::doSomething()
+{
+    if(getWorld()->countTheBotsAroundMe(getX(), getY()) >= 3 || getWorld()->isThiefBotOnMe(getX(), getY()))
+    {
+        return;
+    }
+    else
+    {
+        int chance = randInt(1, 50);
+        if(chance == 1)
+        {
+            if(m_mean == true)
+            {
+                getWorld()->spawnBot(getX(), getY(), true);
+                getWorld()->playSound(SOUND_ROBOT_BORN);
+            }
+            else
+            {
+                getWorld()->spawnBot(getX(), getY(), false);
+                getWorld()->playSound(SOUND_ROBOT_BORN);
+            }
+        }
+    }
+}
 
