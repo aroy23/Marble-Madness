@@ -46,6 +46,7 @@ public:
     
     void moveGoodieToAdjacentOpenSpace(int x, int y, Goodie* g);
 private:
+    bool m_firstFile;
     std::string obtainLevel();
     std::string formatDisplayText(int score, int level, int lives, int health, int ammo, int bonus);
     void setDisplayText();

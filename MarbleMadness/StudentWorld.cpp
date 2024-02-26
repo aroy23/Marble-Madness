@@ -16,6 +16,7 @@ GameWorld* createStudentWorld(string assetPath)
 StudentWorld::StudentWorld(string assetPath)
 : GameWorld(assetPath)
 {
+    m_firstFile = true;
     m_levelComplete = false;
     m_player = nullptr;
     m_bonus = 1000;
@@ -38,14 +39,19 @@ int StudentWorld::init()
     string currLevel = obtainLevel();
     Level lev(assetPath());
     Level::LoadResult result = lev.loadLevel(currLevel);
-    if(result == Level:: load_fail_file_not_found)
+    if(result == Level:: load_fail_file_not_found && !m_firstFile)
     {
         return GWSTATUS_PLAYER_WON;
     }
-    if(result == Level:: load_fail_bad_format)
+    else if(result == Level:: load_fail_file_not_found && m_firstFile)
     {
-        return -1;
+        return GWSTATUS_LEVEL_ERROR;
     }
+    else if(result == Level:: load_fail_bad_format)
+    {
+        return GWSTATUS_LEVEL_ERROR;
+    }
+    m_firstFile = false;
     for(int x = 0; x < VIEW_WIDTH; x++)
     {
         for(int y = 0; y < VIEW_HEIGHT; y++)
