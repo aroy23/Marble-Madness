@@ -287,37 +287,27 @@ Actor* StudentWorld::isActorHereBackwards(int x, int y)
     return nullptr;
 }
 
-bool StudentWorld::canNonMarbleEntityMoveHere(int x, int y)
+bool StudentWorld::canPlayerMoveHere(int x, int y)
 {
-    // When this function is called the caller is only checking if the actor at x y is a Pit and nothing else
-    // DOES NOT violate the spec because dynamic cast is being used to check a specific object in a niche circumstance
-    // Because a Pit is the only object which can be filled
-    // e.g. NOT using dynamic cast to check for common types of objects which the spec prohibits
-    Pit* p = dynamic_cast<Pit*>(isActorHereBackwards(x, y));
-    if(isActorHere(x, y) == nullptr || (isActorHere(x, y)->canNonMarbleEntityMoveIn() && !isActorHereBackwards(x, y)->hasHealth() && p == nullptr))
+    if(isActorHere(x, y) == nullptr || (isActorHere(x, y)->canPlayerMoveIn() && !isActorHereBackwards(x, y)->hasHealth() && !isActorHereBackwards(x, y)->allowsMarble()))
     {
         return true;
     }
     return false;
 }
 
-bool StudentWorld::canRobotMoveHere(int x, int y)
+bool StudentWorld::canEnemyMoveHere(int x, int y)
 {
-    // When this function is called the caller is only checking if the actor at x y is a Pit and nothing else
-    // DOES NOT violate the spec because dynamic cast is being used to check a specific object in a niche circumstance
-    // Because a Pit is the only object which can be filled
-    // e.g. NOT using dynamic cast to check for common types of objects which the spec prohibits
-    Pit* p = dynamic_cast<Pit*>(isActorHereBackwards(x, y));
-    if((isActorHere(x, y) == nullptr && !playerHere(x, y)) || (!playerHere(x, y) && isActorHere(x, y)->canNonMarbleEntityMoveIn() && !isActorHereBackwards(x, y)->hasHealth() && p == nullptr))
+    if((isActorHere(x, y) == nullptr && !playerHere(x, y)) || (!playerHere(x, y) && isActorHere(x, y)->canPlayerMoveIn() && !isActorHereBackwards(x, y)->hasHealth() && !isActorHereBackwards(x, y)->allowsMarble()))
     {
         return true;
     }
     return false;
 }
 
-bool StudentWorld::canMarbleEntityMoveHere(int x, int y)
+bool StudentWorld::canPushableObjectMoveHere(int x, int y)
 {
-    if(isActorHere(x, y) == nullptr || isActorHere(x, y)->canMarbleMoveIn())
+    if(isActorHere(x, y) == nullptr || isActorHere(x, y)->canPushableObjectMoveIn())
     {
         return true;
     }
@@ -326,14 +316,9 @@ bool StudentWorld::canMarbleEntityMoveHere(int x, int y)
 
 bool StudentWorld::pushIfBarrierMarbleHere(int x, int y, int dir)
 {
-    // When this function is called the caller is only checking if the actor at x y is a Marble and nothing else
-    // DOES NOT violate the spec because dynamic cast is being used to check a specific object in a niche circumstance
-    // Because a marble is the only object which can be pushed
-    // e.g. NOT using dynamic cast to check for common types of objects which the spec prohibits
-    Marble* p = dynamic_cast<Marble*>(isActorHere(x, y));
-    if(p != nullptr)
+    if(isActorHere(x, y)->canBePushed())
     {
-        if(p->push(dir))
+        if(isActorHere(x, y)->push(dir))
         {
             return true;
         }
@@ -380,12 +365,12 @@ void StudentWorld::firePea(int x, int y, int dir)
 
 Pit* StudentWorld::retrieveKnownPit(int x, int y)
 {
-    if(canMarbleEntityMoveHere(x, y) && !canNonMarbleEntityMoveHere(x, y))
+    if(canPushableObjectMoveHere(x, y) && !canPlayerMoveHere(x, y))
     {
         // When this function is called, the caller knows for sure that the actor on this square is a pit
         // This is due to the if statement which specifies that a marble can move in but nothing else can
         // DOES NOT violate the spec because dynamic cast is being used after the objects have already been identified
-        // e.g. NOT using dynamic cast to check for common types of objects which the spec prohibits
+        // e.g. NOT using dynamic cast to check for common types of objects which the advises against
         Pit* p = dynamic_cast<Pit*>(isActorHere(x, y));
         return p;
     }
@@ -511,12 +496,12 @@ Actor* StudentWorld::canBotSteal(int x, int y)
 void StudentWorld::stealGoodie(int x, int y, Actor* a)
 {
     // When this function is called, the caller knows for sure that the two actors on this square
-    // are a ThiefBot and a Goodie so using dynamic cast
-    // DOES NOT violate the spec because dynamic cast is being used after the objects have already been identified
-    // e.g. NOT using dynamic cast to check for common types of objects which the spec prohibits
-    Goodie* g = dynamic_cast<Goodie*>(a);
-    g->setVisible(false);
-    g->setCanBeStolenStatus(false);
+    // are a ThiefBot and a Goodie because this function is only called within another function in StudentWorld
+    // so using dynamic cast DOES NOT violate the spec because dynamic cast is being used
+    // after the objects have already been identified
+    // e.g. NOT using dynamic cast to check for common types of objects which the spec advises against
+    a->setVisible(false);
+    a->setCanBeStolenStatus(false);
     ThiefBot* p = dynamic_cast<ThiefBot*>(isActorHereBackwards(x, y));
     p->setMyGoodie(g);
 }
@@ -528,7 +513,7 @@ void StudentWorld::startingNewLevel()
     m_levelComplete = false;
 }
 
-int StudentWorld::countTheBotsAroundMe(int factoryX, int factoryY)
+int StudentWorld::countTheThiefsAroundMe(int factoryX, int factoryY)
 {
     int count = 0;
     list<Actor*>::reverse_iterator p;
@@ -551,7 +536,7 @@ bool StudentWorld::amIInTheRegion(int myX, int myY, int factoryX, int factoryY)
     return false;
 }
 
-bool StudentWorld::isThiefBotOnMe(int x, int y)
+bool StudentWorld::isThiefOnMe(int x, int y)
 {
     if(isActorHereBackwards(x, y)->canSteal())
     {
@@ -560,7 +545,7 @@ bool StudentWorld::isThiefBotOnMe(int x, int y)
     return false;
 }
 
-void StudentWorld::spawnBot(int x, int y, bool meanOrNot)
+void StudentWorld::spawnThief(int x, int y, bool meanOrNot)
 {
     if(meanOrNot)
     {
@@ -577,19 +562,19 @@ void StudentWorld::moveGoodieToAdjacentOpenSpace(int x, int y, Goodie* g)
     int count = countVisibleActorsHereExceptExit(x, y);
     if(count > 2)
     {
-        if(countVisibleActorsHereExceptExit(x+1, y) == 0 || (countVisibleActorsHereExceptExit(x+1, y) == 1 && isActorHereBackwards(x+1, y)->hasHealth() && !isActorHereBackwards(x+1, y)->canBeFilled()))
+        if(countVisibleActorsHereExceptExit(x+1, y) == 0 || (countVisibleActorsHereExceptExit(x+1, y) == 1 && isActorHereBackwards(x+1, y)->hasHealth() && !isActorHereBackwards(x+1, y)->canBePushed()))
         {
             g->moveTo(x+1, y);
         }
-        else if(countVisibleActorsHereExceptExit(x-1, y) == 0 || (countVisibleActorsHereExceptExit(x-1, y) == 1 && isActorHereBackwards(x-1, y)->hasHealth() && !isActorHereBackwards(x-1, y)->canBeFilled()))
+        else if(countVisibleActorsHereExceptExit(x-1, y) == 0 || (countVisibleActorsHereExceptExit(x-1, y) == 1 && isActorHereBackwards(x-1, y)->hasHealth() && !isActorHereBackwards(x-1, y)->canBePushed()))
         {
             g->moveTo(x-1, y);
         }
-        else if(countVisibleActorsHereExceptExit(x, y+1) == 0 || (countVisibleActorsHereExceptExit(x, y+1) == 1 && isActorHereBackwards(x, y+1)->hasHealth() && !isActorHereBackwards(x, y+1)->canBeFilled()))
+        else if(countVisibleActorsHereExceptExit(x, y+1) == 0 || (countVisibleActorsHereExceptExit(x, y+1) == 1 && isActorHereBackwards(x, y+1)->hasHealth() && !isActorHereBackwards(x, y+1)->canBePushed()))
         {
             g->moveTo(x, y+1);
         }
-        else if(countVisibleActorsHereExceptExit(x, y-1) == 0 || (countVisibleActorsHereExceptExit(x, y-1) == 1 && isActorHereBackwards(x, y-1)->hasHealth() && !isActorHereBackwards(x, y-1)->canBeFilled()))
+        else if(countVisibleActorsHereExceptExit(x, y-1) == 0 || (countVisibleActorsHereExceptExit(x, y-1) == 1 && isActorHereBackwards(x, y-1)->hasHealth() && !isActorHereBackwards(x, y-1)->canBePushed()))
         {
             g->moveTo(x, y-1);
         }

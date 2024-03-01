@@ -154,7 +154,7 @@ void Player::doSomething()
         {
             setDirection(right);
             
-            if((getWorld()->retrieveKnownPit(getX()+1, getY()) != nullptr && getWorld()->retrieveKnownPit(getX()+1, getY())->getmarbleOnMe() != nullptr) || getWorld()->canNonMarbleEntityMoveHere(getX()+1, getY()))
+            if((getWorld()->retrieveKnownPit(getX()+1, getY()) != nullptr && getWorld()->retrieveKnownPit(getX()+1, getY())->getmarbleOnMe() != nullptr) || getWorld()->canPlayerMoveHere(getX()+1, getY()))
             {
                 moveTo(getX()+1, getY());
             }
@@ -166,7 +166,7 @@ void Player::doSomething()
         if(key == KEY_PRESS_LEFT)
         {
             setDirection(left);
-            if((getWorld()->retrieveKnownPit(getX()-1, getY()) != nullptr && getWorld()->retrieveKnownPit(getX()-1, getY())->getmarbleOnMe() != nullptr) || getWorld()->canNonMarbleEntityMoveHere(getX()-1, getY()))
+            if((getWorld()->retrieveKnownPit(getX()-1, getY()) != nullptr && getWorld()->retrieveKnownPit(getX()-1, getY())->getmarbleOnMe() != nullptr) || getWorld()->canPlayerMoveHere(getX()-1, getY()))
             {
                 moveTo(getX()-1, getY());
             }
@@ -178,7 +178,7 @@ void Player::doSomething()
         if(key == KEY_PRESS_UP)
         {
             setDirection(up);
-            if((getWorld()->retrieveKnownPit(getX(), getY()+1) != nullptr && getWorld()->retrieveKnownPit(getX(), getY()+1)->getmarbleOnMe() != nullptr) || getWorld()->canNonMarbleEntityMoveHere(getX(), getY()+1))
+            if((getWorld()->retrieveKnownPit(getX(), getY()+1) != nullptr && getWorld()->retrieveKnownPit(getX(), getY()+1)->getmarbleOnMe() != nullptr) || getWorld()->canPlayerMoveHere(getX(), getY()+1))
             {
                 moveTo(getX(), getY()+1);
             }
@@ -190,7 +190,7 @@ void Player::doSomething()
         if(key == KEY_PRESS_DOWN)
         {
             setDirection(down);
-            if((getWorld()->retrieveKnownPit(getX(), getY()-1) != nullptr && getWorld()->retrieveKnownPit(getX(), getY()-1)->getmarbleOnMe() != nullptr) || getWorld()->canNonMarbleEntityMoveHere(getX(), getY()-1))
+            if((getWorld()->retrieveKnownPit(getX(), getY()-1) != nullptr && getWorld()->retrieveKnownPit(getX(), getY()-1)->getmarbleOnMe() != nullptr) || getWorld()->canPlayerMoveHere(getX(), getY()-1))
             {
                 moveTo(getX(), getY()-1);
             }
@@ -253,7 +253,7 @@ void Marble::doSomething()
 
 bool Marble::push(int dir)
 {
-    if(dir == right && getWorld()->canMarbleEntityMoveHere(getX()+1, getY()))
+    if(dir == right && getWorld()->canPushableObjectMoveHere(getX()+1, getY()))
     {
         if(getWorld()->retrieveKnownPit(getX()+1, getY()) != nullptr)
         {
@@ -262,7 +262,7 @@ bool Marble::push(int dir)
         moveTo(getX()+1, getY());
         return true;
     }
-    if(dir == left && getWorld()->canMarbleEntityMoveHere(getX()-1, getY()))
+    if(dir == left && getWorld()->canPushableObjectMoveHere(getX()-1, getY()))
     {
         if(getWorld()->retrieveKnownPit(getX()-1, getY()) != nullptr)
         {
@@ -271,7 +271,7 @@ bool Marble::push(int dir)
         moveTo(getX()-1, getY());
         return true;
     }
-    if(dir == up && getWorld()->canMarbleEntityMoveHere(getX(), getY()+1))
+    if(dir == up && getWorld()->canPushableObjectMoveHere(getX(), getY()+1))
     {
         if(getWorld()->retrieveKnownPit(getX(), getY()+1) != nullptr)
         {
@@ -280,7 +280,7 @@ bool Marble::push(int dir)
         moveTo(getX(), getY()+1);
         return true;
     }
-    if(dir == down && getWorld()->canMarbleEntityMoveHere(getX(), getY()-1))
+    if(dir == down && getWorld()->canPushableObjectMoveHere(getX(), getY()-1))
     {
         if(getWorld()->retrieveKnownPit(getX(), getY()-1) != nullptr)
         {
@@ -469,7 +469,7 @@ void RageBot::doSomething()
         equalizeTicks();
         if(getDirection() == right)
         {
-            if(getWorld()->canRobotMoveHere(getX()+1, getY()))
+            if(getWorld()->canEnemyMoveHere(getX()+1, getY()))
             {
                 moveTo(getX()+1, getY());
             }
@@ -480,7 +480,7 @@ void RageBot::doSomething()
         }
         else if(getDirection() == left)
         {
-            if(getWorld()->canRobotMoveHere(getX()-1, getY()))
+            if(getWorld()->canEnemyMoveHere(getX()-1, getY()))
             {
                 moveTo(getX()-1, getY());
             }
@@ -491,7 +491,7 @@ void RageBot::doSomething()
         }
         else if(getDirection() == up)
         {
-            if(getWorld()->canRobotMoveHere(getX(), getY()+1))
+            if(getWorld()->canEnemyMoveHere(getX(), getY()+1))
             {
                 moveTo(getX(), getY()+1);
             }
@@ -502,7 +502,7 @@ void RageBot::doSomething()
         }
         else if(getDirection() == down)
         {
-            if(getWorld()->canRobotMoveHere(getX(), getY()-1))
+            if(getWorld()->canEnemyMoveHere(getX(), getY()-1))
             {
                 moveTo(getX(), getY()-1);
             }
@@ -618,7 +618,7 @@ void ThiefBot::shootStealMoveOrTurn(bool mean)
         equalizeTicks();
         if(getDirection() == right)
         {
-            if(getWorld()->canRobotMoveHere(getX()+1, getY()))
+            if(getWorld()->canEnemyMoveHere(getX()+1, getY()))
             {
                 moveTo(getX()+1, getY());
                 increaseSquaresMoved();
@@ -627,7 +627,7 @@ void ThiefBot::shootStealMoveOrTurn(bool mean)
         }
         else if(getDirection() == left)
         {
-            if(getWorld()->canRobotMoveHere(getX()-1, getY()))
+            if(getWorld()->canEnemyMoveHere(getX()-1, getY()))
             {
                 moveTo(getX()-1, getY());
                 increaseSquaresMoved();
@@ -636,7 +636,7 @@ void ThiefBot::shootStealMoveOrTurn(bool mean)
         }
         else if(getDirection() == up)
         {
-            if(getWorld()->canRobotMoveHere(getX(), getY()+1))
+            if(getWorld()->canEnemyMoveHere(getX(), getY()+1))
             {
                 moveTo(getX(), getY()+1);
                 increaseSquaresMoved();
@@ -645,7 +645,7 @@ void ThiefBot::shootStealMoveOrTurn(bool mean)
         }
         else if(getDirection() == down)
         {
-            if(getWorld()->canRobotMoveHere(getX(), getY()-1))
+            if(getWorld()->canEnemyMoveHere(getX(), getY()-1))
             {
                 moveTo(getX(), getY()-1);
                 increaseSquaresMoved();
@@ -676,28 +676,28 @@ void ThiefBot::shootStealMoveOrTurn(bool mean)
     }
     if(direction == right)
     {
-        if(getWorld()->canRobotMoveHere(getX()+1, getY()))
+        if(getWorld()->canEnemyMoveHere(getX()+1, getY()))
         {
             setDirection(right);
             moveTo(getX()+1, getY());
             increaseSquaresMoved();
             return;
         }
-        else if(getWorld()->canRobotMoveHere(getX()-1, getY()))
+        else if(getWorld()->canEnemyMoveHere(getX()-1, getY()))
         {
             setDirection(left);
             moveTo(getX()-1, getY());
             increaseSquaresMoved();
             return;
         }
-        else if(getWorld()->canRobotMoveHere(getX(), getY()+1))
+        else if(getWorld()->canEnemyMoveHere(getX(), getY()+1))
         {
             setDirection(up);
             moveTo(getX(), getY()+1);
             increaseSquaresMoved();
             return;
         }
-        else if(getWorld()->canRobotMoveHere(getX(), getY()-1))
+        else if(getWorld()->canEnemyMoveHere(getX(), getY()-1))
         {
             setDirection(down);
             moveTo(getX(), getY()-1);
@@ -712,28 +712,28 @@ void ThiefBot::shootStealMoveOrTurn(bool mean)
     }
     else if(direction == left)
     {
-        if(getWorld()->canRobotMoveHere(getX()-1, getY()))
+        if(getWorld()->canEnemyMoveHere(getX()-1, getY()))
         {
             setDirection(left);
             moveTo(getX()-1, getY());
             increaseSquaresMoved();
             return;
         }
-        else if(getWorld()->canRobotMoveHere(getX()+1, getY()))
+        else if(getWorld()->canEnemyMoveHere(getX()+1, getY()))
         {
             setDirection(right);
             moveTo(getX()+1, getY());
             increaseSquaresMoved();
             return;
         }
-        else if(getWorld()->canRobotMoveHere(getX(), getY()+1))
+        else if(getWorld()->canEnemyMoveHere(getX(), getY()+1))
         {
             setDirection(up);
             moveTo(getX(), getY()+1);
             increaseSquaresMoved();
             return;
         }
-        else if(getWorld()->canRobotMoveHere(getX(), getY()-1))
+        else if(getWorld()->canEnemyMoveHere(getX(), getY()-1))
         {
             setDirection(down);
             moveTo(getX(), getY()-1);
@@ -748,28 +748,28 @@ void ThiefBot::shootStealMoveOrTurn(bool mean)
     }
     else if(direction == up)
     {
-        if(getWorld()->canRobotMoveHere(getX(), getY()+1))
+        if(getWorld()->canEnemyMoveHere(getX(), getY()+1))
         {
             setDirection(up);
             moveTo(getX(), getY()+1);
             increaseSquaresMoved();
             return;
         }
-        if(getWorld()->canRobotMoveHere(getX()-1, getY()))
+        if(getWorld()->canEnemyMoveHere(getX()-1, getY()))
         {
             setDirection(left);
             moveTo(getX()-1, getY());
             increaseSquaresMoved();
             return;
         }
-        else if(getWorld()->canRobotMoveHere(getX()+1, getY()))
+        else if(getWorld()->canEnemyMoveHere(getX()+1, getY()))
         {
             setDirection(right);
             moveTo(getX()+1, getY());
             increaseSquaresMoved();
             return;
         }
-        else if(getWorld()->canRobotMoveHere(getX(), getY()-1))
+        else if(getWorld()->canEnemyMoveHere(getX(), getY()-1))
         {
             setDirection(down);
             moveTo(getX(), getY()-1);
@@ -784,28 +784,28 @@ void ThiefBot::shootStealMoveOrTurn(bool mean)
     }
     else if(direction == down)
     {
-        if(getWorld()->canRobotMoveHere(getX(), getY()-1))
+        if(getWorld()->canEnemyMoveHere(getX(), getY()-1))
         {
             setDirection(down);
             moveTo(getX(), getY()-1);
             increaseSquaresMoved();
             return;
         }
-        if(getWorld()->canRobotMoveHere(getX()-1, getY()))
+        if(getWorld()->canEnemyMoveHere(getX()-1, getY()))
         {
             setDirection(left);
             moveTo(getX()-1, getY());
             increaseSquaresMoved();
             return;
         }
-        else if(getWorld()->canRobotMoveHere(getX()+1, getY()))
+        else if(getWorld()->canEnemyMoveHere(getX()+1, getY()))
         {
             setDirection(left);
             moveTo(getX()+1, getY());
             increaseSquaresMoved();
             return;
         }
-        else if(getWorld()->canRobotMoveHere(getX(), getY()+1))
+        else if(getWorld()->canEnemyMoveHere(getX(), getY()+1))
         {
             setDirection(up);
             moveTo(getX(), getY()+1);
@@ -847,7 +847,7 @@ void MeanThiefBot::takeDamage()
 // ThiefBot Factory Functions
 void ThiefBotFactory::doSomething()
 {
-    if(getWorld()->countTheBotsAroundMe(getX(), getY()) >= 3 || getWorld()->isThiefBotOnMe(getX(), getY()))
+    if(getWorld()->countTheThiefsAroundMe(getX(), getY()) >= 3 || getWorld()->isThiefOnMe(getX(), getY()))
     {
         return;
     }
@@ -858,11 +858,11 @@ void ThiefBotFactory::doSomething()
         {
             if(m_mean == true)
             {
-                getWorld()->spawnBot(getX(), getY(), true);
+                getWorld()->spawnThief(getX(), getY(), true);
             }
             else
             {
-                getWorld()->spawnBot(getX(), getY(), false);
+                getWorld()->spawnThief(getX(), getY(), false);
             }
             getWorld()->playSound(SOUND_ROBOT_BORN);
         }

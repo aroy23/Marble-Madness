@@ -15,7 +15,7 @@ class StudentWorld : public GameWorld
 {
 public:
     StudentWorld(std::string assetPath);
-    ~StudentWorld();
+    virtual ~StudentWorld();
     virtual int init();
     virtual int move();
     virtual void cleanUp();
@@ -25,8 +25,8 @@ public:
     void crystalObtained();
     int getCrystals();
     
-    bool canNonMarbleEntityMoveHere(int x, int y);
-    bool canMarbleEntityMoveHere(int x, int y);
+    bool canPlayerMoveHere(int x, int y);
+    bool canPushableObjectMoveHere(int x, int y);
     bool pushIfBarrierMarbleHere(int x, int y, int dir);
     Pit* retrieveKnownPit(int x, int y);
     
@@ -39,10 +39,10 @@ public:
     bool canBotFire(int x, int y, int dir);
     Actor* canBotSteal(int x, int y);
     
-    int countTheBotsAroundMe(int factoryX, int factoryY);
-    bool isThiefBotOnMe(int x, int y);
-    void spawnBot(int x, int y, bool meanOrNot);
-    bool canRobotMoveHere(int x, int y);
+    int countTheThiefsAroundMe(int factoryX, int factoryY);
+    bool isThiefOnMe(int x, int y);
+    void spawnThief(int x, int y, bool meanOrNot);
+    bool canEnemyMoveHere(int x, int y);
     
     void moveGoodieToAdjacentOpenSpace(int x, int y, Goodie* g);
 private:

@@ -21,10 +21,10 @@ public:
     void setDead() {
         m_dead = true;
     }
-    virtual bool canNonMarbleEntityMoveIn() const {
+    virtual bool canPlayerMoveIn() const {
         return false;
     }
-    virtual bool canMarbleMoveIn() const {
+    virtual bool canPushableObjectMoveIn() const {
         return false;
     }
     virtual bool hasHealth() const {
@@ -42,15 +42,20 @@ public:
     bool canBeStolen() const {
         return m_canBeStolen;
     }
-    virtual bool canBeFilled() const {
+    virtual bool canBePushed() const {
         return false;
     }
     virtual bool stealable() const {
         return false;
     }
-    
     StudentWorld* getWorld() const {
         return m_studentWorld;
+    }
+    virtual bool push(int dir) {
+        return false;
+    }
+    virtual bool allowsMarble() const {
+        return false;
     }
     
 private:
@@ -68,7 +73,7 @@ public:
     virtual bool canPeaPass() const {
         return true;
     }
-    virtual bool canNonMarbleEntityMoveIn() const {
+    virtual bool canPlayerMoveIn() const {
         return true;
     }
 };
@@ -115,9 +120,9 @@ class Marble : public Entity
 public:
     Marble(StudentWorld* sw, int imageID, int initX, int initY);
     virtual void doSomething();
-    bool push(int dir);
+    virtual bool push(int dir);
     
-    virtual bool canBeFilled() const {
+    virtual bool canBePushed() const {
         return true;
     }
 };
@@ -220,7 +225,11 @@ public:
     virtual bool canPeaPass() const {
         return true;
     }
-    virtual bool canMarbleMoveIn() const{
+    virtual bool canPushableObjectMoveIn() const {
+        return true;
+    }
+    
+    virtual bool allowsMarble() const {
         return true;
     }
     Marble* getmarbleOnMe() const;
@@ -247,7 +256,7 @@ public:
     virtual bool canPeaPass() const {
         return true;
     }
-    virtual bool canNonMarbleEntityMoveIn() const {
+    virtual bool canPlayerMoveIn() const {
         return true;
     }
 };
@@ -264,7 +273,7 @@ class Exit : public MarbleBarrier
 public:
     Exit(StudentWorld* sw, int imageID, int initX, int initY);
     virtual void doSomething();
-    virtual bool canMarbleMoveIn() const {
+    virtual bool canPushableObjectMoveIn() const {
         return false;
     }
 private:
