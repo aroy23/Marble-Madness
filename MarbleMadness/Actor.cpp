@@ -91,7 +91,7 @@ RageBot::RageBot(StudentWorld* sw, int imageID, int initX, int initY, int dir)
 {}
 
 ThiefBot::ThiefBot(StudentWorld* sw, int imageID, int initX, int initY, int dir, int hp)
-: Robot(sw, imageID, initX, initY, hp, dir) {
+: Robot(sw, imageID, initX, initY, hp, dir) { // ThiefBot has 5 health (default parameter in header file)
     m_haveGoodie = false; // ThiefBots don't start with goodie
     m_squaresMoved = 0; // Keeps track of squares moved
     m_distanceBeforeTurning = randInt(1, 6); // Randomly selecting distance before turning
@@ -99,7 +99,7 @@ ThiefBot::ThiefBot(StudentWorld* sw, int imageID, int initX, int initY, int dir,
 }
 
 MeanThiefBot::MeanThiefBot(StudentWorld* sw, int imageID, int initX, int initY, int dir)
-: ThiefBot(sw, imageID, initX, initY, dir, 8)
+: ThiefBot(sw, imageID, initX, initY, dir, 8) // Mean ThiefBot has 8 health
 {}
 
 ThiefBotFactory::ThiefBotFactory(StudentWorld* sw, int imageID, int initX, int initY, bool meanOrNot)
