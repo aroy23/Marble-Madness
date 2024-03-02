@@ -318,8 +318,8 @@ void Exit::doSomething() {
 }
 
 // Goodie Functions
-bool Goodie::gotThisGoodie(Goodie* g, int x, int y, int score) { // General function for if goodie stolen
-    if(getWorld()->playerHere(x, y) && canBeStolen()) {
+bool Goodie::gotThisGoodie(Goodie* g, int goodieX, int goodieY, int score) { // General function for if goodie stolen
+    if(getWorld()->playerHere(goodieX, goodieY) && canBeStolen()) {
         g->getWorld()->increaseScore(score);
         g->setDead();
         g->getWorld()->playSound(SOUND_GOT_GOODIE);

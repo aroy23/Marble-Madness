@@ -286,7 +286,7 @@ class Goodie : public PushableBarrier // A Goodie is a type of pushable barrier
 {
 public:
     Goodie(StudentWorld* sw, int imageID, int initX, int initY);
-    bool gotThisGoodie(Goodie* g, int x, int y, int score);
+    bool gotThisGoodie(Goodie* g, int goodieX, int goodieY, int score);
     
     virtual void doSomething() = 0;
     
