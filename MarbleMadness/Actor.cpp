@@ -6,7 +6,7 @@ Actor::~Actor()
 
 Actor::Actor(StudentWorld* sw, int imageID, int initX, int initY, int dir)
 : GraphObject(imageID, initX, initY, dir) {
-    m_itemOnMe = nullptr; // Actors don't start with an item on them
+    m_itemWithMe = nullptr; // Actors don't start with an item on them
     m_canBeStolen = false;
     setVisible(true);
     m_studentWorld = sw; // Setting StudentWorld appropriately
@@ -128,12 +128,12 @@ void Entity::getHit() {
     m_health -= 2;
 }
 
-Actor* Actor::getItemOnMe() const {
-    return m_itemOnMe; // Used to get the item on the actor (e.g. marble)
+Actor* Actor::getItemWithMe() const {
+    return m_itemWithMe; // Used to get the item on the actor (e.g. marble)
 }
 
-void Actor::setItemOnMe(Actor* m) {
-    m_itemOnMe = m; // Used to set the item on the actor (e.g. marble)
+void Actor::setItemWithMe(Actor* m) {
+    m_itemWithMe = m; // Used to set the item on the actor (e.g. marble)
 }
 
 // Player Functions
@@ -143,7 +143,7 @@ void Player::doSomething() {
         if (key == KEY_PRESS_RIGHT) { // If dir is right and the player can move there, move, else if marble there preventing movement, push if possible and move
             setDirection(right);
             
-            if((getWorld()->retrieveObjectSwallower(getX()+1, getY()) != nullptr && getWorld()->retrieveObjectSwallower(getX()+1, getY())->getItemOnMe() != nullptr) || getWorld()->canPlayerMoveHere(getX()+1, getY())) {
+            if((getWorld()->retrieveObjectSwallower(getX()+1, getY()) != nullptr && getWorld()->retrieveObjectSwallower(getX()+1, getY())->getItemWithMe() != nullptr) || getWorld()->canPlayerMoveHere(getX()+1, getY())) {
                 moveTo(getX()+1, getY());
             }
             else if(getWorld()->pushIfPushableHere(getX()+1, getY(), right)) {
@@ -152,7 +152,7 @@ void Player::doSomething() {
         }
         if(key == KEY_PRESS_LEFT) { // If dir is left and the player can move there, move, else if marble there preventing movement, push if possible and move
             setDirection(left);
-            if((getWorld()->retrieveObjectSwallower(getX()-1, getY()) != nullptr && getWorld()->retrieveObjectSwallower(getX()-1, getY())->getItemOnMe() != nullptr) || getWorld()->canPlayerMoveHere(getX()-1, getY())) {
+            if((getWorld()->retrieveObjectSwallower(getX()-1, getY()) != nullptr && getWorld()->retrieveObjectSwallower(getX()-1, getY())->getItemWithMe() != nullptr) || getWorld()->canPlayerMoveHere(getX()-1, getY())) {
                 moveTo(getX()-1, getY());
             }
             else if(getWorld()->pushIfPushableHere(getX()-1, getY(), left)) {
@@ -161,7 +161,7 @@ void Player::doSomething() {
         }
         if(key == KEY_PRESS_UP) { // If dir is up and the player can move there, move, else if marble there preventing movement, push if possible and move
             setDirection(up);
-            if((getWorld()->retrieveObjectSwallower(getX(), getY()+1) != nullptr && getWorld()->retrieveObjectSwallower(getX(), getY()+1)->getItemOnMe() != nullptr) || getWorld()->canPlayerMoveHere(getX(), getY()+1)) {
+            if((getWorld()->retrieveObjectSwallower(getX(), getY()+1) != nullptr && getWorld()->retrieveObjectSwallower(getX(), getY()+1)->getItemWithMe() != nullptr) || getWorld()->canPlayerMoveHere(getX(), getY()+1)) {
                 moveTo(getX(), getY()+1);
             }
             else if(getWorld()->pushIfPushableHere(getX(), getY()+1, up)) {
@@ -170,7 +170,7 @@ void Player::doSomething() {
         }
         if(key == KEY_PRESS_DOWN) { // If dir is down and the player can move there, move, else if marble there preventing movement, push if possible and move
             setDirection(down);
-            if((getWorld()->retrieveObjectSwallower(getX(), getY()-1) != nullptr && getWorld()->retrieveObjectSwallower(getX(), getY()-1)->getItemOnMe() != nullptr) || getWorld()->canPlayerMoveHere(getX(), getY()-1)) {
+            if((getWorld()->retrieveObjectSwallower(getX(), getY()-1) != nullptr && getWorld()->retrieveObjectSwallower(getX(), getY()-1)->getItemWithMe() != nullptr) || getWorld()->canPlayerMoveHere(getX(), getY()-1)) {
                 moveTo(getX(), getY()-1);
             }
             else if(getWorld()->pushIfPushableHere(getX(), getY()-1, down)) {
@@ -222,28 +222,28 @@ void Marble::doSomething() {
 bool Marble::push(int dir) { // Determines if a marble can be pushed in the current dir
     if(dir == right && getWorld()->canPushableObjectMoveHere(getX()+1, getY())) {
         if(getWorld()->retrieveObjectSwallower(getX()+1, getY()) != nullptr) {
-            getWorld()->retrieveObjectSwallower(getX()+1, getY())->setItemOnMe(this);
+            getWorld()->retrieveObjectSwallower(getX()+1, getY())->setItemWithMe(this);
         } // If pushable object can move in current dir, move. It pit is here then swallow marble
         moveTo(getX()+1, getY());
         return true;
     }
     if(dir == left && getWorld()->canPushableObjectMoveHere(getX()-1, getY())) {
         if(getWorld()->retrieveObjectSwallower(getX()-1, getY()) != nullptr) {
-            getWorld()->retrieveObjectSwallower(getX()-1, getY())->setItemOnMe(this);
+            getWorld()->retrieveObjectSwallower(getX()-1, getY())->setItemWithMe(this);
         } // If pushable object can move in current dir, move. It pit is here then swallow marble
         moveTo(getX()-1, getY());
         return true;
     }
     if(dir == up && getWorld()->canPushableObjectMoveHere(getX(), getY()+1)) {
         if(getWorld()->retrieveObjectSwallower(getX(), getY()+1) != nullptr) {
-            getWorld()->retrieveObjectSwallower(getX(), getY()+1)->setItemOnMe(this);
+            getWorld()->retrieveObjectSwallower(getX(), getY()+1)->setItemWithMe(this);
         } // If pushable object can move in current dir, move. It pit is here then swallow marble
         moveTo(getX(), getY()+1);
         return true;
     }
     if(dir == down && getWorld()->canPushableObjectMoveHere(getX(), getY()-1)) {
         if(getWorld()->retrieveObjectSwallower(getX(), getY()-1) != nullptr) {
-            getWorld()->retrieveObjectSwallower(getX(), getY()-1)->setItemOnMe(this);
+            getWorld()->retrieveObjectSwallower(getX(), getY()-1)->setItemWithMe(this);
         } // If pushable object can move in current dir, move. It pit is here then swallow marble
         moveTo(getX(), getY()-1);
         return true;
@@ -285,8 +285,8 @@ void Pit::doSomething() {
     if(!isAlive()) {
         return;
     }
-    if(getItemOnMe() != nullptr) { // If item is on the pit (marble) pit dies and so does item on it
-        getItemOnMe()->setDead();
+    if(getItemWithMe() != nullptr) { // If item is on the pit (marble) pit dies and so does item on it
+        getItemWithMe()->setDead();
         setDead();
     }
 }

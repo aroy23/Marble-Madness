@@ -12,8 +12,8 @@ public:
     virtual ~Actor();
     virtual void doSomething() = 0;
     void setCanBeStolenStatus(bool state);
-    Actor* getItemOnMe() const;
-    void setItemOnMe(Actor* m);
+    Actor* getItemWithMe() const;
+    void setItemWithMe(Actor* m);
     
     bool isAlive() const {
         return !m_dead;
@@ -60,7 +60,7 @@ public:
     
 private:
     StudentWorld* m_studentWorld;
-    Actor* m_itemOnMe;
+    Actor* m_itemWithMe;
     bool m_dead;
     bool m_canBeStolen;
 };
