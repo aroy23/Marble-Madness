@@ -16,7 +16,6 @@ GameWorld* createStudentWorld(string assetPath)
 StudentWorld::StudentWorld(string assetPath)
 : GameWorld(assetPath)
 {
-    m_firstFile = true;
     m_levelComplete = false;
     m_player = nullptr;
     m_bonus = 1000;
@@ -31,28 +30,19 @@ StudentWorld::~StudentWorld()
 // StudentWorld Functions
 int StudentWorld::init()
 {
-    if(getLevel() == 100)
+    if(getLevel() == 100) // If level 100, player wins
     {
         return GWSTATUS_PLAYER_WON;
     }
-    startingNewLevel();
-    string currLevel = obtainLevel();
+    startingNewLevel(); // general function to initialize bonus, crystals, etc.
+    string currLevel = obtainLevel(); // using stringstreams to obtain level
     Level lev(assetPath());
     Level::LoadResult result = lev.loadLevel(currLevel);
-    if(result == Level:: load_fail_file_not_found && !m_firstFile)
-    {
-        return GWSTATUS_PLAYER_WON;
-    }
-    else if(result == Level:: load_fail_file_not_found && m_firstFile)
+    if(result == Level:: load_fail_file_not_found || result == Level:: load_fail_bad_format)
     {
         return GWSTATUS_LEVEL_ERROR;
     }
-    else if(result == Level:: load_fail_bad_format)
-    {
-        return GWSTATUS_LEVEL_ERROR;
-    }
-    m_firstFile = false;
-    for(int x = 0; x < VIEW_WIDTH; x++)
+    for(int x = 0; x < VIEW_WIDTH; x++) // For each square in the level push back the relevant actor
     {
         for(int y = 0; y < VIEW_HEIGHT; y++)
         {
@@ -60,58 +50,47 @@ int StudentWorld::init()
             if(item == Level::player)
             {
                 m_player = new Player(this, IID_PLAYER, x, y, GraphObject::right);
-                cerr << "The Player is at x = " << x << " and y = " << y << endl;
             }
             if(item == Level::wall)
             {
                 m_actors.push_back(new Wall(this, IID_WALL, x, y));
-                cerr << "A Wall is at x = " << x << " and y = " << y << endl;
             }
             if(item == Level::pit)
             {
                 m_actors.push_front(new Pit(this, IID_PIT, x, y));
-                cerr << "A Pit is at x = " << x << " and y = " << y << endl;
             }
             if(item == Level::extra_life)
             {
                 m_actors.push_front(new ExtraLifeGoodie(this, IID_EXTRA_LIFE, x, y));
-                cerr << "An Extra Life Goodie is at x = " << x << " and y = " << y << endl;
             }
             if(item == Level::restore_health)
             {
                 m_actors.push_front(new RestoreHealthGoodie(this, IID_RESTORE_HEALTH, x, y));
-                cerr << "A Restore Health Goodie is at x = " << x << " and y = " << y << endl;
             }
             if(item == Level::ammo)
             {
                 m_actors.push_front(new AmmoGoodie(this, IID_AMMO, x, y));
-                cerr << "An Ammo Goodie is at x = " << x << " and y = " << y << endl;
             }
             if(item == Level::crystal)
             {
                 m_crystals++;
                 m_actors.push_front(new Crystal(this, IID_CRYSTAL, x, y));
-                cerr << "A Crystal is at x = " << x << " and y = " << y << endl;
             }
             if(item == Level::horiz_ragebot)
             {
                 m_actors.push_back(new RageBot(this, IID_RAGEBOT, x, y, GraphObject::right));
-                cerr << "An Horizontal RageBot is at x = " << x << " and y = " << y << endl;
             }
             if(item == Level::vert_ragebot)
             {
                 m_actors.push_back(new RageBot(this, IID_RAGEBOT, x, y, GraphObject::down));
-                cerr << "A Vertical RageBot is at x = " << x << " and y = " << y << endl;
             }
             if(item == Level::marble)
             {
                 m_actors.push_back(new Marble(this, IID_MARBLE, x, y));
-                cerr << "A Marble is at x = " << x << " and y = " << y << endl;
             }
             if(item == Level::exit)
             {
                 m_actors.push_back(new Exit(this, IID_EXIT, x, y));
-                cerr << "An Exit is at x = " << x << " and y = " << y << endl;
             }
             if(item == Level::mean_thiefbot_factory)
             {
@@ -128,12 +107,12 @@ int StudentWorld::init()
 
 int StudentWorld::move()
 {
-    setDisplayText();
+    setDisplayText(); // Setting top level display text
     
     list<Actor*>::iterator p;
     for(p = m_actors.begin(); p != m_actors.end(); p++)
     {
-        (*p)->doSomething();
+        (*p)->doSomething(); // All actors do something, if this kills player, player dies, if level is complete, finish level
         if(!m_player->isAlive())
         {
             decLives();
@@ -145,7 +124,7 @@ int StudentWorld::move()
             return GWSTATUS_FINISHED_LEVEL;
         }
     }
-    m_player->doSomething();
+    m_player->doSomething(); // All player does something, if this kills player, player dies, if level is complete, finish level
     if(!m_player->isAlive())
     {
         decLives();
@@ -162,7 +141,7 @@ int StudentWorld::move()
     {
         if(!(*q)->isAlive())
         {
-            delete (*q);
+            delete (*q); // Delete all dead actors
             q = m_actors.erase(q);
         }
         else
@@ -171,11 +150,11 @@ int StudentWorld::move()
         }
     }
     
-    if(m_bonus > 0)
+    if(m_bonus > 0) // Decreasing bonus by one each tick
     {
         m_bonus--;
     }
-    
+    // After all is done, check once again to see if player dead or level complete
     if(!m_player->isAlive())
     {
         decLives();
@@ -191,7 +170,7 @@ int StudentWorld::move()
     return GWSTATUS_CONTINUE_GAME;
 }
 
-void StudentWorld::cleanUp()
+void StudentWorld::cleanUp() // Deleting all actors and player
 {
     list<Actor*>::iterator p;
     for(p = m_actors.begin(); p != m_actors.end();)
@@ -203,7 +182,7 @@ void StudentWorld::cleanUp()
     m_player = nullptr;
 }
 
-void StudentWorld::setDisplayText()
+void StudentWorld::setDisplayText() // Sets top text
 {
     int score = getScore();
     int level = getLevel();
@@ -216,7 +195,7 @@ void StudentWorld::setDisplayText()
     setGameStatText(s);
 }
 
-string StudentWorld::formatDisplayText(int score, int level, int lives, int health, int ammo, int bonus)
+string StudentWorld::formatDisplayText(int score, int level, int lives, int health, int ammo, int bonus) // Formats top text
 {
     ostringstream oss;
     oss << "Score: ";
@@ -233,7 +212,7 @@ string StudentWorld::formatDisplayText(int score, int level, int lives, int heal
     return s;
 }
 
-string StudentWorld::obtainLevel()
+string StudentWorld::obtainLevel() // Obtains current level using stringstreams
 {
     ostringstream oss;
     oss << "level";
@@ -261,7 +240,7 @@ void StudentWorld::levelFinished()
     m_crystals = 0;
 }
 
-Actor* StudentWorld::isActorHere(int x, int y)
+Actor* StudentWorld::isActorHere(int x, int y) // find an actor at x, y, private to StudentWorld
 {
     list<Actor*>::iterator p;
     for(p = m_actors.begin(); p != m_actors.end(); p++)
@@ -274,7 +253,7 @@ Actor* StudentWorld::isActorHere(int x, int y)
     return nullptr;
 }
 
-Actor* StudentWorld::isActorHereBackwards(int x, int y)
+Actor* StudentWorld::isActorHereBackwards(int x, int y) // find an actor backwards in the list STL due to the varying ways actors are added to the STL (pushback vs pushfront)
 {
     list<Actor*>::reverse_iterator p;
     for(p = m_actors.rbegin(); p != m_actors.rend(); p++)
@@ -287,38 +266,38 @@ Actor* StudentWorld::isActorHereBackwards(int x, int y)
     return nullptr;
 }
 
-bool StudentWorld::canPlayerMoveHere(int x, int y)
+bool StudentWorld::canPlayerMoveHere(int x, int y) // Determines if player can move to x, y
 {
-    if(isActorHere(x, y) == nullptr || (isActorHere(x, y)->canPlayerMoveIn() && !isActorHereBackwards(x, y)->hasHealth() && !isActorHereBackwards(x, y)->allowsMarble()))
+    if(isActorHere(x, y) == nullptr || (isActorHere(x, y)->canPlayerMoveIn() && !isActorHereBackwards(x, y)->hasHealth() && !isActorHereBackwards(x, y)->allowsMarble())) // If no actor in space or actor allows player movement and no enemy and no pit
     {
         return true;
     }
     return false;
 }
 
-bool StudentWorld::canEnemyMoveHere(int x, int y)
+bool StudentWorld::canEnemyMoveHere(int x, int y) // Determines if an enemy (robot) can move to x, y
 {
-    if((isActorHere(x, y) == nullptr && !playerHere(x, y)) || (!playerHere(x, y) && isActorHere(x, y)->canPlayerMoveIn() && !isActorHereBackwards(x, y)->hasHealth() && !isActorHereBackwards(x, y)->allowsMarble()))
+    if((isActorHere(x, y) == nullptr && !playerHere(x, y)) || (!playerHere(x, y) && isActorHere(x, y)->canPlayerMoveIn() && !isActorHereBackwards(x, y)->hasHealth() && !isActorHereBackwards(x, y)->allowsMarble())) // If no actor and no player or no player and actor allows player movement and no enemy and no pit
     {
         return true;
     }
     return false;
 }
 
-bool StudentWorld::canPushableObjectMoveHere(int x, int y)
+bool StudentWorld::canPushableObjectMoveHere(int x, int y) // Determines if a pushable object, marble can move
 {
-    if(isActorHere(x, y) == nullptr || isActorHere(x, y)->canPushableObjectMoveIn())
+    if(isActorHere(x, y) == nullptr || isActorHere(x, y)->canPushableObjectMoveIn()) // If no actor or pit present, return true
     {
         return true;
     }
     return false;
 }
 
-bool StudentWorld::pushIfBarrierMarbleHere(int x, int y, int dir)
+bool StudentWorld::pushIfPushableHere(int x, int y, int dir) // Pushing if a pushable object if present
 {
-    if(isActorHere(x, y)->canBePushed())
+    if(isActorHere(x, y)->canBePushed()) // If pushable object such as marble present
     {
-        if(isActorHere(x, y)->push(dir))
+        if(isActorHere(x, y)->push(dir)) // push if possible
         {
             return true;
         }
@@ -326,15 +305,15 @@ bool StudentWorld::pushIfBarrierMarbleHere(int x, int y, int dir)
     return false;
 }
 
-bool StudentWorld::damageActorWithPeaIfHere(int x, int y)
+bool StudentWorld::damageActorWithPeaIfHere(int x, int y) // Damage enemy (robot) or player with a be if hit
 {
-    if((isActorHereBackwards(x, y) != nullptr && !isActorHereBackwards(x, y)->canPeaPass()) || playerHere(x, y))
+    if((isActorHereBackwards(x, y) != nullptr && !isActorHereBackwards(x, y)->canPeaPass()) || playerHere(x, y)) // If actor present and the pea can't pass
     {
-        if(isActorHereBackwards(x, y)->hasHealth())
+        if(isActorHereBackwards(x, y)->hasHealth()) // Enemy present
         {
             isActorHereBackwards(x, y)->takeDamage();
         }
-        else if(playerHere(x, y))
+        else if(playerHere(x, y)) // Player present
         {
             retrievePlayer()->takeDamage();
         }
@@ -343,7 +322,7 @@ bool StudentWorld::damageActorWithPeaIfHere(int x, int y)
     return false;
 }
 
-void StudentWorld::firePea(int x, int y, int dir)
+void StudentWorld::firePea(int x, int y, int dir) // Firing pea
 {
     if(dir == GraphObject::right)
     {
@@ -363,16 +342,11 @@ void StudentWorld::firePea(int x, int y, int dir)
     }
 }
 
-Pit* StudentWorld::retrieveKnownPit(int x, int y)
+Actor* StudentWorld::retrieveObjectSwallower(int x, int y) // Retrieving objects that can swallow (pit)
 {
-    if(canPushableObjectMoveHere(x, y) && !canPlayerMoveHere(x, y))
+    if(canPushableObjectMoveHere(x, y) && !canPlayerMoveHere(x, y)) // If pushable object can move and player can't move, must be a pit
     {
-        // When this function is called, the caller knows for sure that the actor on this square is a pit
-        // This is due to the if statement which specifies that a marble can move in but nothing else can
-        // DOES NOT violate the spec because dynamic cast is being used after the objects have already been identified
-        // e.g. NOT using dynamic cast to check for common types of objects which the advises against
-        Pit* p = dynamic_cast<Pit*>(isActorHere(x, y));
-        return p;
+        return isActorHere(x, y);
     }
     return nullptr;
 }
@@ -386,23 +360,18 @@ bool StudentWorld::playerHere(int x, int y)
     return false;
 }
 
-Player* StudentWorld::retrievePlayer()
+bool StudentWorld::canEnemyFire(int x, int y, int dir) // Determines if enemy can fire
 {
-    return m_player;
-}
-
-bool StudentWorld::canBotFire(int x, int y, int dir)
-{
-    if(dir == GraphObject::right)
+    if(dir == GraphObject::right) // In right direction
     {
         if(y == retrievePlayer()->getY() && x < retrievePlayer()->getX())
         {
-            int distanceBetween = retrievePlayer()->getX()-x-1;
-            if(distanceBetween == 0)
+            int distanceBetween = retrievePlayer()->getX()-x-1; // Finds distance between player and enemy
+            if(distanceBetween == 0) // If player in front of enemy return true
             {
                 return true;
             }
-            for(int i = 1; i < distanceBetween+1; i++)
+            for(int i = 1; i < distanceBetween+1; i++) // If there is an obstruction between player and enemy return false
             {
                 if(isActorHere(x+i, y) != nullptr && !isActorHere(x+i, y)->canPeaPass())
                 {
@@ -412,16 +381,16 @@ bool StudentWorld::canBotFire(int x, int y, int dir)
             return true;
         }
     }
-    else if(dir == GraphObject::left)
+    else if(dir == GraphObject::left) // In left direction
     {
         if(y == retrievePlayer()->getY() && x > retrievePlayer()->getX())
         {
-            int distanceBetween = abs(retrievePlayer()->getX()-x)-1;
-            if(distanceBetween == 0)
+            int distanceBetween = abs(retrievePlayer()->getX()-x)-1; // Finds distance between player and enemy
+            if(distanceBetween == 0) // If player in front of enemy return true
             {
                 return true;
             }
-            for(int i = 1; i < distanceBetween+1; i++)
+            for(int i = 1; i < distanceBetween+1; i++) // If there is an obstruction between player and enemy return false
             {
                 if(isActorHere(x-i, y) != nullptr && !isActorHere(x-i, y)->canPeaPass())
                 {
@@ -431,16 +400,16 @@ bool StudentWorld::canBotFire(int x, int y, int dir)
             return true;
         }
     }
-    else if(dir == GraphObject::up)
+    else if(dir == GraphObject::up) // In up direction
     {
         if(x == retrievePlayer()->getX() && y < retrievePlayer()->getY())
         {
-            int distanceBetween = retrievePlayer()->getY()-y-1;
-            if(distanceBetween == 0)
+            int distanceBetween = retrievePlayer()->getY()-y-1; // Finds distance between player and enemy
+            if(distanceBetween == 0) // If player in front of enemy return true
             {
                 return true;
             }
-            for(int i = 1; i < distanceBetween+1; i++)
+            for(int i = 1; i < distanceBetween+1; i++) // If there is an obstruction between player and enemy return false
             {
                 if(isActorHere(x, y+i) != nullptr && !isActorHere(x, y+i)->canPeaPass())
                 {
@@ -450,16 +419,16 @@ bool StudentWorld::canBotFire(int x, int y, int dir)
             return true;
         }
     }
-    else if(dir == GraphObject::down)
+    else if(dir == GraphObject::down) // In down direction
     {
         if(x == retrievePlayer()->getX() && y > retrievePlayer()->getY())
         {
-            int distanceBetween = abs(retrievePlayer()->getY()-y)-1;
-            if(distanceBetween == 0)
+            int distanceBetween = abs(retrievePlayer()->getY()-y)-1; // Finds distance between player and enemy
+            if(distanceBetween == 0) // If player in front of enemy return true
             {
                 return true;
             }
-            for(int i = 1; i < distanceBetween+1; i++)
+            for(int i = 1; i < distanceBetween+1; i++) // If there is an obstruction between player and enemy return false
             {
                 if(isActorHere(x, y-i) != nullptr && !isActorHere(x, y-i)->canPeaPass())
                 {
@@ -472,16 +441,16 @@ bool StudentWorld::canBotFire(int x, int y, int dir)
     return false;
 }
 
-Actor* StudentWorld::canBotSteal(int x, int y)
+Actor* StudentWorld::canThiefSteal(int x, int y, ThiefBot* t)
 {
     list<Actor*>::iterator p;
     for(p = m_actors.begin(); p != m_actors.end(); p++)
     {
-        if((*p)->canBeStolen() && (*p)->getX() == x && (*p)->getY() == y)
+        if((*p)->canBeStolen() && (*p)->getX() == x && (*p)->getY() == y) // If unstolen goodie has same x and y coords
         {
-            if(randInt(1, 10) == 1)
+            if(randInt(1, 10) == 1) // 1 in 10 chance it can be stolen
             {
-                stealGoodie((*p)->getX(), (*p)->getY(), (*p));
+                stealGoodie((*p)->getX(), (*p)->getY(), (*p), t);
                 return (*p);
             }
             else
@@ -493,17 +462,11 @@ Actor* StudentWorld::canBotSteal(int x, int y)
     return nullptr;
 }
 
-void StudentWorld::stealGoodie(int x, int y, Actor* a)
+void StudentWorld::stealGoodie(int x, int y, Actor* a, ThiefBot* t) // steals goodie
 {
-    // When this function is called, the caller knows for sure that the two actors on this square
-    // are a ThiefBot and a Goodie because this function is only called within another function in StudentWorld
-    // so using dynamic cast DOES NOT violate the spec because dynamic cast is being used
-    // after the objects have already been identified
-    // e.g. NOT using dynamic cast to check for common types of objects which the spec advises against
     a->setVisible(false);
-    a->setCanBeStolenStatus(false);
-    ThiefBot* p = dynamic_cast<ThiefBot*>(isActorHereBackwards(x, y));
-    p->setMyGoodie(g);
+    a->setCanBeStolenStatus(false); // goodie cant be stolen anymore
+    t->setMyGoodie(a); // thiefbot now "has" the goodie
 }
 
 void StudentWorld::startingNewLevel()
@@ -513,7 +476,7 @@ void StudentWorld::startingNewLevel()
     m_levelComplete = false;
 }
 
-int StudentWorld::countTheThiefsAroundMe(int factoryX, int factoryY)
+int StudentWorld::countTheThiefsAroundMe(int factoryX, int factoryY) // Counting thiefbots around factory
 {
     int count = 0;
     list<Actor*>::reverse_iterator p;
@@ -527,9 +490,9 @@ int StudentWorld::countTheThiefsAroundMe(int factoryX, int factoryY)
     return count;
 }
 
-bool StudentWorld::amIInTheRegion(int myX, int myY, int factoryX, int factoryY)
+bool StudentWorld::amIInTheRegion(int myX, int myY, int factoryX, int factoryY) // Checks if coords is within a factory region
 {
-    if(myX <= factoryX+3 && myX >= factoryX-3 && myY<= factoryY+3 && myY >= factoryY-3)
+    if(myX <= factoryX+3 && myX >= factoryX-3 && myY<= factoryY+3 && myY >= factoryY-3) // Bounding box for factory region
     {
         return true;
     }
@@ -547,7 +510,7 @@ bool StudentWorld::isThiefOnMe(int x, int y)
 
 void StudentWorld::spawnThief(int x, int y, bool meanOrNot)
 {
-    if(meanOrNot)
+    if(meanOrNot) // Determines wheter a mean ThiefBot or Regular ThiefBot should be spawned
     {
         m_actors.push_back(new MeanThiefBot(this, IID_MEAN_THIEFBOT, x, y, GraphObject::right));
     }
@@ -557,39 +520,40 @@ void StudentWorld::spawnThief(int x, int y, bool meanOrNot)
     }
 }
 
-void StudentWorld::moveGoodieToAdjacentOpenSpace(int x, int y, Goodie* g)
+void StudentWorld::moveActorToAdjacentOpenSpace(int x, int y, Actor* a) // Used mainly for moving goodie to open open space if the current one is occupied by another goodie
 {
     int count = countVisibleActorsHereExceptExit(x, y);
-    if(count > 2)
+    if(count > 2) // Count is greater than two to account for the pea when ThiefBot Dies
     {
-        if(countVisibleActorsHereExceptExit(x+1, y) == 0 || (countVisibleActorsHereExceptExit(x+1, y) == 1 && isActorHereBackwards(x+1, y)->hasHealth() && !isActorHereBackwards(x+1, y)->canBePushed()))
+        // Moves to right direction if possible, if not then left, up, down in that order
+        if(countVisibleActorsHereExceptExit(x+1, y) == 0 || (countVisibleActorsHereExceptExit(x+1, y) == 1 && !playerHere(x+1, y) && isActorHereBackwards(x+1, y)->hasHealth() && !isActorHereBackwards(x+1, y)->canBePushed())) // If right space is open or no exit, no player, no marble, and yes enemy, move to that space
         {
-            g->moveTo(x+1, y);
+            a->moveTo(x+1, y);
         }
-        else if(countVisibleActorsHereExceptExit(x-1, y) == 0 || (countVisibleActorsHereExceptExit(x-1, y) == 1 && isActorHereBackwards(x-1, y)->hasHealth() && !isActorHereBackwards(x-1, y)->canBePushed()))
+        else if(countVisibleActorsHereExceptExit(x-1, y) == 0 || (countVisibleActorsHereExceptExit(x-1, y) == 1 && !playerHere(x-1, y) && isActorHereBackwards(x-1, y)->hasHealth() && !isActorHereBackwards(x-1, y)->canBePushed())) // If left space is open or no exit, no player, no marble, and yes enemy, move to that space
         {
-            g->moveTo(x-1, y);
+            a->moveTo(x-1, y);
         }
-        else if(countVisibleActorsHereExceptExit(x, y+1) == 0 || (countVisibleActorsHereExceptExit(x, y+1) == 1 && isActorHereBackwards(x, y+1)->hasHealth() && !isActorHereBackwards(x, y+1)->canBePushed()))
+        else if(countVisibleActorsHereExceptExit(x, y+1) == 0 || (countVisibleActorsHereExceptExit(x, y+1) == 1 && !playerHere(x, y+1) && isActorHereBackwards(x, y+1)->hasHealth() && !isActorHereBackwards(x, y+1)->canBePushed())) // If up space is open or no exit, no player, no marble, and yes enemy, move to that space
         {
-            g->moveTo(x, y+1);
+            a->moveTo(x, y+1);
         }
-        else if(countVisibleActorsHereExceptExit(x, y-1) == 0 || (countVisibleActorsHereExceptExit(x, y-1) == 1 && isActorHereBackwards(x, y-1)->hasHealth() && !isActorHereBackwards(x, y-1)->canBePushed()))
+        else if(countVisibleActorsHereExceptExit(x, y-1) == 0 || (countVisibleActorsHereExceptExit(x, y-1) == 1 && !playerHere(x, y-1) && isActorHereBackwards(x, y-1)->hasHealth() && !isActorHereBackwards(x, y-1)->canBePushed())) // If down space is open or no exit, no player, no marble, and yes enemy, move to that space
         {
-            g->moveTo(x, y-1);
+            a->moveTo(x, y-1);
         }
         else
         {
-            g->moveTo(x, y);
+            a->moveTo(x, y);
         }
     }
     else
     {
-        g->moveTo(x, y);
+        a->moveTo(x, y);
     }
 }
 
-int StudentWorld::countVisibleActorsHereExceptExit(int x, int y)
+int StudentWorld::countVisibleActorsHereExceptExit(int x, int y) // Counting the visible actors present at x, y
 {
     int count = 0;
     list<Actor*>::iterator p;
@@ -597,12 +561,12 @@ int StudentWorld::countVisibleActorsHereExceptExit(int x, int y)
     {
         if((*p)->getX() == x && (*p)->getY() == y)
         {
-            if((*p)->stealable() && (*p)->canBeStolen())
+            if((*p)->stealable() && (*p)->canBeStolen()) // If goodie is still stealable, its visible so count it
             {
                 count++;
                 continue;
             }
-            else if((*p)->stealable() && !(*p)->canBeStolen())
+            else if((*p)->stealable() && !(*p)->canBeStolen()) // If its stolen, its invisible so move on to next actor
             {
                 continue;
             }
@@ -611,6 +575,9 @@ int StudentWorld::countVisibleActorsHereExceptExit(int x, int y)
                 count++;
             }
         }
+    }
+    if(retrievePlayer()->getX() == x && retrievePlayer()->getY() == y) { // count the player too if its at x, y
+        count++;
     }
     return count;
 }

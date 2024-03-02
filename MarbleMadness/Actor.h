@@ -4,16 +4,16 @@
 #include "GraphObject.h"
 
 class StudentWorld;
-class Marble;
-class Goodie;
 
-class Actor : public GraphObject
+class Actor : public GraphObject // Base Class for Every Actor, Actor
 {
 public:
     Actor(StudentWorld* sw, int imageID, int initX, int initY, int dir = none);
     virtual ~Actor();
     virtual void doSomething() = 0;
     void setCanBeStolenStatus(bool state);
+    Actor* getItemOnMe() const;
+    void setItemOnMe(Actor* m);
     
     bool isAlive() const {
         return !m_dead;
@@ -60,11 +60,14 @@ public:
     
 private:
     StudentWorld* m_studentWorld;
+    Actor* m_itemOnMe;
     bool m_dead;
     bool m_canBeStolen;
 };
 
-class Pea : public Actor
+// The comments describe the polymorphic structure below
+
+class Pea : public Actor // A pea is an Actor
 {
 public:
     Pea(StudentWorld* sw, int imageID, int initX, int initY, int dir);
@@ -78,7 +81,7 @@ public:
     }
 };
 
-class Entity : public Actor
+class Entity : public Actor // An Entity is a type of actor which has health
 {
 public:
     Entity(StudentWorld* sw, int imageID, int initX, int initY, int hp, int dir = none);
@@ -99,7 +102,7 @@ private:
 };
 
 // Entities
-class Player : public Entity
+class Player : public Entity // A player is a type of entity
 {
 public:
     Player(StudentWorld* sw, int imageID, int initX, int initY, int dir);
@@ -115,7 +118,7 @@ private:
     int m_peas;
 };
 
-class Marble : public Entity
+class Marble : public Entity // A marble is a type of entity
 {
 public:
     Marble(StudentWorld* sw, int imageID, int initX, int initY);
@@ -127,7 +130,7 @@ public:
     }
 };
 
-class Robot : public Entity
+class Robot : public Entity // A robot is a type of entity
 {
 public:
     Robot(StudentWorld* sw, int imageID, int initX, int initY, int hp, int dir);
@@ -146,7 +149,7 @@ private:
     int m_ticksUntilICanMove;
 };
 
-class RageBot : public Robot
+class RageBot : public Robot // A ragebot is a type of entity, but it is also a type of robot, thus it derives entity and robot
 {
 public:
     RageBot(StudentWorld* sw, int imageID, int initX, int initY, int dir);
@@ -154,14 +157,14 @@ public:
     virtual void takeDamage();
 };
 
-class ThiefBot : public Robot
+class ThiefBot : public Robot // A ThiefBot is a type of entity, but it is also a type of robot, thus it derives entity and robot
 {
 public:
     ThiefBot(StudentWorld* sw, int imageID, int initX, int initY, int dir, int hp = 5);
     virtual void doSomething();
     virtual void takeDamage();
-    void setMyGoodie(Goodie* g);
-    Goodie* returnMyGoodie() const;
+    void setMyGoodie(Actor* a);
+    Actor* returnMyGoodie() const;
     void resetSquaresMoved();
     void increaseSquaresMoved();
     void setDistanceBeforeTurning(int d);
@@ -188,10 +191,13 @@ private:
     bool m_haveGoodie;
     int m_squaresMoved;
     int m_distanceBeforeTurning;
-    Goodie* m_myGoodie;
+    void directionDeciding(int dir, int x, int y);
+    void directionTuning(int dir, int x, int y, bool vert);
+    bool moveIfAvailableRoom(int dir, int x, int y);
+    Actor* m_myGoodie;
 };
 
-class MeanThiefBot : public ThiefBot
+class MeanThiefBot : public ThiefBot // A  Mean ThiefBot is a type of entity, but it is also a type of robot, but it is also a type of ThiefBot thus it derives entity, robot, and ThiefBot
 {
 public:
     MeanThiefBot(StudentWorld* sw, int imageID, int initX, int initY, int dir);
@@ -201,7 +207,7 @@ private:
     
 };
 
-class EntityBarrier : public Actor
+class EntityBarrier : public Actor // An EntityBarrier is a type of actor which stops those of class type entity from moving, with one exception (marbles)
 {
 public:
     EntityBarrier(StudentWorld* sw, int imageID, int initX, int initY, int dir = none);
@@ -209,14 +215,14 @@ public:
 };
 
 // Entity Barriers
-class Wall : public EntityBarrier
+class Wall : public EntityBarrier // A wall is a type of entity barrier
 {
 public:
     Wall(StudentWorld* sw, int imageID, int initX, int initY);
     virtual void doSomething();
 };
 
-class Pit : public EntityBarrier
+class Pit : public EntityBarrier // A pit is a type of entity barrier
 {
 public:
     Pit(StudentWorld* sw, int imageID, int initX, int initY);
@@ -232,13 +238,9 @@ public:
     virtual bool allowsMarble() const {
         return true;
     }
-    Marble* getmarbleOnMe() const;
-    void setmarbleOnMe(Marble* m);
-private:
-    Marble* m_marbleOnMe;
 };
 
-class ThiefBotFactory : public EntityBarrier
+class ThiefBotFactory : public EntityBarrier // A ThiefBot Factory is a type of Entity Barrier
 {
 public:
     ThiefBotFactory(StudentWorld* sw, int imageID, int initX, int initY, bool meanOrNot);
@@ -247,10 +249,10 @@ private:
     bool m_mean;
 };
 
-class MarbleBarrier : public Actor
+class PushableBarrier : public Actor // A PushableBarrier is a type of actor which stops pushable objects from moving
 {
 public:
-    MarbleBarrier(StudentWorld* sw, int imageID, int initX, int initY, int dir = none);
+    PushableBarrier(StudentWorld* sw, int imageID, int initX, int initY, int dir = none);
     virtual void doSomething() = 0;
     
     virtual bool canPeaPass() const {
@@ -261,14 +263,14 @@ public:
     }
 };
 
-class Crystal : public MarbleBarrier
+class Crystal : public PushableBarrier // A crystal is a type of pushable barrier
 {
 public:
     Crystal(StudentWorld* sw, int imageID, int initX, int initY);
     virtual void doSomething();
 };
 
-class Exit : public MarbleBarrier
+class Exit : public PushableBarrier // an exit is a type of pushable barrier
 {
 public:
     Exit(StudentWorld* sw, int imageID, int initX, int initY);
@@ -280,33 +282,35 @@ private:
     bool m_revealed;
 };
 
-class Goodie : public MarbleBarrier
+class Goodie : public PushableBarrier // A Goodie is a type of pushable barrier
 {
 public:
     Goodie(StudentWorld* sw, int imageID, int initX, int initY);
+    bool gotThisGoodie(Goodie* g, int x, int y, int score);
+    
     virtual void doSomething() = 0;
-    bool gotGoodie(Goodie* g, int x, int y, int score);
     
     virtual bool stealable() const {
         return true;
     }
+private:
 };
 
-class ExtraLifeGoodie : public Goodie
+class ExtraLifeGoodie : public Goodie // An ExtraLifeGoodie is a type of PushableBarrier, but it is also a type of Goodie, thus it derives PushableBarrier and Goodie
 {
 public:
     ExtraLifeGoodie(StudentWorld* sw, int imageID, int initX, int initY);
     virtual void doSomething();
 };
 
-class RestoreHealthGoodie : public Goodie
+class RestoreHealthGoodie : public Goodie // A RestorHealthGoodie is a type of PushableBarrier, but it is also a type of Goodie, thus it derives PushableBarrier and Goodie
 {
 public:
     RestoreHealthGoodie(StudentWorld* sw, int imageID, int initX, int initY);
     virtual void doSomething();
 };
 
-class AmmoGoodie : public Goodie
+class AmmoGoodie : public Goodie // An AmmoGoodie is a type of PushableBarrier, but it is also a type of Goodie, thus it derives PushableBarrier and Goodie
 {
 public:
     AmmoGoodie(StudentWorld* sw, int imageID, int initX, int initY);
@@ -314,4 +318,3 @@ public:
 };
 
 #endif // ACTOR_H_
-
