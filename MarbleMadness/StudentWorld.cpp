@@ -5,6 +5,8 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <iomanip>
+#include <algorithm>
 using namespace std;
 
 GameWorld* createStudentWorld(string assetPath)
