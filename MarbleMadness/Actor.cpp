@@ -185,6 +185,7 @@ void Player::doSomething() {
         }
         if(key == KEY_PRESS_ESCAPE) { // Die if esc pressed
             setDead();
+            getWorld()->playSound(SOUND_PLAYER_DIE);
         }
     }
 }
