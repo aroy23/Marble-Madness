@@ -378,6 +378,7 @@ void RageBot::doSomething() {
     }
     else if(getWorld()->canEnemyFire(getX(), getY(), getDirection())) { // reset ticks, fire if possible
         equalizeTicks();
+        getWorld()->playSound(SOUND_ENEMY_FIRE);
         getWorld()->firePea(getX(), getY(), getDirection());
         return;
     }
@@ -547,6 +548,7 @@ void ThiefBot::shootStealMoveOrTurn(bool mean)
     if(mean && getWorld()->canEnemyFire(getX(), getY(), getDirection())) // If the thiefbot is mean, fire if possible
     {
         equalizeTicks();
+        getWorld()->playSound(SOUND_ENEMY_FIRE);
         getWorld()->firePea(getX(), getY(), getDirection());
         return;
     }

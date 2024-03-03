@@ -40,9 +40,13 @@ int StudentWorld::init()
     string currLevel = obtainLevel(); // using stringstreams to obtain level
     Level lev(assetPath());
     Level::LoadResult result = lev.loadLevel(currLevel);
-    if(result == Level:: load_fail_file_not_found || result == Level:: load_fail_bad_format)
+    if(result == Level:: load_fail_bad_format)
     {
         return GWSTATUS_LEVEL_ERROR;
+    }
+    else if(result == Level:: load_fail_file_not_found)
+    {
+        return GWSTATUS_PLAYER_WON;
     }
     for(int x = 0; x < VIEW_WIDTH; x++) // For each square in the level push back the relevant actor
     {
@@ -375,7 +379,7 @@ bool StudentWorld::canEnemyFire(int x, int y, int dir) // Determines if enemy ca
             }
             for(int i = 1; i < distanceBetween+1; i++) // If there is an obstruction between player and enemy return false
             {
-                if(isActorHere(x+i, y) != nullptr && !isActorHere(x+i, y)->canPeaPass())
+                if(isActorHereBackwards(x+i, y) != nullptr && !isActorHereBackwards(x+i, y)->canPeaPass())
                 {
                     return false;
                 }
@@ -394,7 +398,7 @@ bool StudentWorld::canEnemyFire(int x, int y, int dir) // Determines if enemy ca
             }
             for(int i = 1; i < distanceBetween+1; i++) // If there is an obstruction between player and enemy return false
             {
-                if(isActorHere(x-i, y) != nullptr && !isActorHere(x-i, y)->canPeaPass())
+                if(isActorHereBackwards(x-i, y) != nullptr && !isActorHereBackwards(x-i, y)->canPeaPass())
                 {
                     return false;
                 }
@@ -413,7 +417,7 @@ bool StudentWorld::canEnemyFire(int x, int y, int dir) // Determines if enemy ca
             }
             for(int i = 1; i < distanceBetween+1; i++) // If there is an obstruction between player and enemy return false
             {
-                if(isActorHere(x, y+i) != nullptr && !isActorHere(x, y+i)->canPeaPass())
+                if(isActorHereBackwards(x, y+i) != nullptr && !isActorHereBackwards(x, y+i)->canPeaPass())
                 {
                     return false;
                 }
@@ -432,7 +436,7 @@ bool StudentWorld::canEnemyFire(int x, int y, int dir) // Determines if enemy ca
             }
             for(int i = 1; i < distanceBetween+1; i++) // If there is an obstruction between player and enemy return false
             {
-                if(isActorHere(x, y-i) != nullptr && !isActorHere(x, y-i)->canPeaPass())
+                if(isActorHereBackwards(x, y-i) != nullptr && !isActorHereBackwards(x, y-i)->canPeaPass())
                 {
                     return false;
                 }
