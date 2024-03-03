@@ -36,7 +36,7 @@ public:
     void firePea(int x, int y, int dir); // Fires a pea
 
     bool playerHere(int x, int y); // Confirms if player is at x y
-    Player* retrievePlayer() { // Retrieve player pointer
+    Player* retrievePlayer() const { // Retrieve player pointer
         return m_player;
     }
     
