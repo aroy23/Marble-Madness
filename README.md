@@ -10,6 +10,8 @@ In Marble Madness, the player navigates through a series of robot-infested mazes
 - **Objective**: Gather all blue crystals to reveal the exit and advance to the next level.
 - **Gameplay**: Move avatar with arrow keys, collect goodies, shoot pea cannon, and avoid or destroy robots.
 - **Goodies**: Extra life, restore health, and ammo.
+- **Marbles**: Can be pushed by player, not robots
+- **Pit**: Obstacles for player and robots
 - **Robots**: Horizontal/Vertical RageBots, Regular/Mean ThiefBots.
 - **Factories**: Produce ThiefBots.
 - **Exit**: Revealed after collecting all crystals in a level.
@@ -32,8 +34,11 @@ In Marble Madness, the player navigates through a series of robot-infested mazes
 
 - **Player**: Move, shoot, collect goodies.
 - **RageBot**: Move, shoot at player.
-- **ThiefBot**: Wander, pick up goodies, shoot at player.
+- **ThiefBot**: Wander, pick up goodies
+- **Mean ThiefBot**: Wander, pick up goodies, shoot at player.
 - **Factories**: Produce ThiefBots.
+- **Pit** Obstacle that blocks a player, robots, but not peas
+- **Marble** Can be pushed into a pit to make the pit disappear, can be destroyed
 - **Goodies**: Grant bonuses when collected.
 
 ## Conclusion
