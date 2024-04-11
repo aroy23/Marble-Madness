@@ -5,6 +5,8 @@
 In Marble Madness, the player navigates through a series of robot-infested mazes to gather valuable crystals. After collecting all crystals within a maze, an exit is revealed, allowing the player to advance to the next maze. The game features various obstacles, including robots, marbles, pits, and goodies.
 
 - **Note**: XQuartz must be downloaded for this program to run: https://www.xquartz.org/
+  
+![image](https://github.com/aroy23/Marble-Madness/assets/83829580/a8dcb67b-49af-48b3-a2a7-db36d6eb5967)
 
 ## Game Details
 
