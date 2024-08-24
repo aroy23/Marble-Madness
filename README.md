@@ -48,5 +48,3 @@ In Marble Madness, the player navigates through a series of robot-infested mazes
 ## Conclusion
 
 Marble Madness is an exciting game where players must navigate challenging mazes filled with obstacles and enemies. With strategic movement and precise shooting, players can conquer each level and emerge victorious. Are you ready to take on the challenge and lead yourself to victory?
-
-This Program Was Made For UCLA CS 32 Project 3 Taught by David Smallberg and Carey Nachenberg for the Winter 2024 Quarter
